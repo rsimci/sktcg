@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK TCG — Pokémon Trading Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --black:#0A0A0A;--navy:#0D1B2A;--navy-mid:#1B3A5C;--navy-light:#2E5077;
+  --white:#FAFAFA;--gray-50:#F7F7F7;--gray-100:#F0F0F0;--gray-200:#E0E0E0;
+  --gray-300:#CCC;--gray-400:#999;--gray-500:#777;--gray-600:#555;
+  --green:#1A6B3C;--red:#C0392B;--gold:#B8860B;
+  --radius:10px;--radius-lg:16px;--shadow:0 2px 20px rgba(0,0,0,0.06);
+  --shadow-hover:0 8px 40px rgba(13,27,42,0.1);
+  --transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--white);color:var(--black);-webkit-font-smoothing:antialiased;line-height:1.6;font-size:14px;}
+a{text-decoration:none;color:inherit;transition:var(--transition);}
+button{cursor:pointer;border:none;background:none;font-family:inherit;}
+img{max-width:100%;display:block;}
+ul{list-style:none;}
+
+/* ===== UTILITY ===== */
+.container{max-width:1200px;margin:0 auto;padding:0 24px;}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+.badge{display:inline-block;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:20px;}
+.badge-new{background:#0D1B2A;color:#FAFAFA;}
+.badge-sale{background:#C0392B;color:#FAFAFA;}
+.badge-hot{background:#B8860B;color:#FAFAFA;}
+.badge-graded{background:#1B3A5C;color:#FAFAFA;}
+.price{font-weight:600;font-variant-numeric:tabular-nums;}
+.price-old{text-decoration:line-through;color:var(--gray-400);font-weight:300;font-size:13px;}
+
+/* ===== ANNOUNCEMENT BAR ===== */
+.announcement{background:var(--navy);color:var(--white);text-align:center;padding:10px 16px;font-size:12px;font-weight:300;letter-spacing:2px;}
+.announcement strong{font-weight:500;}
+
+/* ===== HEADER / NAV ===== */
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:1000;backdrop-filter:blur(20px);background:rgba(250,250,250,0.92);}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:70px;}
+.logo{display:flex;align-items:baseline;gap:4px;cursor:pointer;}
+.logo-sk{font-size:26px;font-weight:700;color:var(--black);letter-spacing:1px;}
+.logo-tcg{font-size:26px;font-weight:200;color:var(--navy-mid);letter-spacing:1px;}
+.nav{display:flex;align-items:center;gap:32px;}
+.nav-link{font-size:13px;font-weight:400;color:var(--gray-600);letter-spacing:0.5px;padding:4px 0;border-bottom:1.5px solid transparent;transition:var(--transition);}
+.nav-link:hover,.nav-link.active{color:var(--black);border-bottom-color:var(--navy);}
+.nav-link.has-dropdown{position:relative;}
+.nav-link.has-dropdown::after{content:'';display:inline-block;width:4px;height:4px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-left:5px;margin-bottom:2px;}
+.dropdown{position:absolute;top:100%;left:-16px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:12px 0;min-width:220px;box-shadow:var(--shadow-hover);opacity:0;pointer-events:none;transform:translateY(8px);transition:var(--transition);z-index:100;}
+.nav-link.has-dropdown:hover .dropdown{opacity:1;pointer-events:all;transform:translateY(0);}
+.dropdown a{display:block;padding:8px 20px;font-size:13px;font-weight:300;color:var(--gray-600);}
+.dropdown a:hover{background:var(--gray-50);color:var(--black);}
+.dropdown .dropdown-divider{height:1px;background:var(--gray-200);margin:6px 0;}
+.header-actions{display:flex;align-items:center;gap:20px;}
+.header-actions button,.header-actions a{color:var(--gray-600);transition:var(--transition);}
+.header-actions button:hover,.header-actions a:hover{color:var(--black);}
+.search-toggle{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:300;color:var(--gray-400);border:1px solid var(--gray-200);border-radius:8px;padding:7px 14px;transition:var(--transition);}
+.search-toggle:hover{border-color:var(--gray-300);color:var(--gray-600);}
+.cart-btn{position:relative;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;}
+.cart-count{background:var(--navy);color:var(--white);font-size:9px;font-weight:600;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:absolute;top:-6px;right:-10px;}
+
+/* ===== SEARCH OVERLAY ===== */
+.search-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.6);z-index:2000;display:none;align-items:flex-start;justify-content:center;padding-top:120px;backdrop-filter:blur(4px);}
+.search-overlay.active{display:flex;}
+.search-box{background:var(--white);border-radius:var(--radius-lg);padding:24px;width:90%;max-width:600px;box-shadow:var(--shadow-hover);}
+.search-input{width:100%;border:none;font-size:18px;font-weight:300;font-family:'Inter',sans-serif;outline:none;padding:8px 0;border-bottom:1px solid var(--gray-200);color:var(--black);}
+.search-input::placeholder{color:var(--gray-300);}
+.search-hints{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
+.search-hint{font-size:11px;font-weight:400;color:var(--gray-500);background:var(--gray-100);padding:5px 12px;border-radius:20px;cursor:pointer;transition:var(--transition);}
+.search-hint:hover{background:var(--gray-200);}
+
+/* ===== HERO ===== */
+.hero{background:var(--navy);color:var(--white);padding:80px 0;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:600px;height:600px;border-radius:50%;border:1px solid rgba(255,255,255,0.04);}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:400px;height:400px;border-radius:50%;border:1px solid rgba(255,255,255,0.03);}
+.hero-content{position:relative;z-index:1;max-width:600px;}
+.hero-label{font-size:11px;font-weight:400;letter-spacing:6px;text-transform:uppercase;opacity:0.4;margin-bottom:16px;}
+.hero-title{font-size:48px;font-weight:200;letter-spacing:2px;line-height:1.2;margin-bottom:16px;}
+.hero-title strong{font-weight:600;}
+.hero-desc{font-size:15px;font-weight:300;opacity:0.6;line-height:1.8;margin-bottom:32px;}
+.hero-cta{display:inline-flex;align-items:center;gap:8px;background:var(--white);color:var(--black);padding:14px 32px;border-radius:8px;font-size:13px;font-weight:500;letter-spacing:1px;transition:var(--transition);}
+.hero-cta:hover{background:var(--gray-100);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+.hero-cta svg{width:16px;height:16px;}
+
+/* ===== CATEGORY CARDS ===== */
+.categories{padding:80px 0;}
+.section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:40px;}
+.section-title{font-size:28px;font-weight:200;letter-spacing:1px;}
+.section-link{font-size:12px;font-weight:400;color:var(--navy-mid);letter-spacing:1px;}
+.section-link:hover{color:var(--black);}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+.cat-card{position:relative;border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:var(--transition);border:1px solid var(--gray-200);aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;background:var(--gray-50);}
+.cat-card:hover{border-color:var(--navy);box-shadow:var(--shadow-hover);transform:translateY(-2px);}
+.cat-icon{width:64px;height:64px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;}
+.cat-card h3{font-size:16px;font-weight:500;margin-bottom:6px;}
+.cat-card p{font-size:12px;font-weight:300;color:var(--gray-500);}
+
+/* ===== PRODUCT GRID ===== */
+.products-section{padding:80px 0;background:var(--gray-50);}
+.product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+.product-card{background:var(--white);border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--gray-200);transition:var(--transition);cursor:pointer;}
+.product-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-3px);border-color:transparent;}
+.product-img{aspect-ratio:1/1;background:var(--gray-100);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:24px;}
+.product-img .badge{position:absolute;top:12px;left:12px;z-index:1;}
+.product-placeholder{width:80%;height:80%;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.product-placeholder svg{opacity:0.15;}
+.product-placeholder span{font-size:10px;font-weight:400;color:var(--gray-300);letter-spacing:2px;text-transform:uppercase;}
+.product-info{padding:16px;}
+.product-brand{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gray-400);margin-bottom:4px;}
+.product-name{font-size:14px;font-weight:500;color:var(--black);margin-bottom:2px;line-height:1.4;}
+.product-edition{font-size:12px;font-weight:300;color:var(--gray-500);margin-bottom:12px;}
+.product-footer{display:flex;align-items:center;justify-content:space-between;}
+.product-price{font-size:18px;font-weight:600;color:var(--black);}
+.product-price-old{font-size:12px;}
+.add-cart-btn{width:36px;height:36px;border-radius:50%;background:var(--navy);color:var(--white);display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0;}
+.add-cart-btn:hover{background:var(--navy-mid);transform:scale(1.08);}
+.add-cart-btn svg{width:16px;height:16px;}
+.product-stock{font-size:11px;font-weight:400;color:var(--green);margin-top:8px;display:flex;align-items:center;gap:4px;}
+.product-stock::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;}
+.product-stock.low{color:var(--gold);}
+.product-stock.low::before{background:var(--gold);}
+.product-stock.out{color:var(--red);}
+.product-stock.out::before{background:var(--red);}
+
+/* ===== FEATURED BANNER ===== */
+.featured-banner{padding:80px 0;}
+.banner-card{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);border-radius:var(--radius-lg);padding:64px;color:var(--white);display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+.banner-card::after{content:'';position:absolute;right:-60px;top:-60px;width:300px;height:300px;border-radius:50%;border:1px solid rgba(255,255,255,0.06);}
+.banner-content{max-width:500px;position:relative;z-index:1;}
+.banner-label{font-size:11px;font-weight:400;letter-spacing:5px;text-transform:uppercase;opacity:0.4;margin-bottom:12px;}
+.banner-title{font-size:36px;font-weight:200;letter-spacing:1px;margin-bottom:12px;line-height:1.3;}
+.banner-title strong{font-weight:600;}
+.banner-desc{font-size:14px;font-weight:300;opacity:0.6;margin-bottom:28px;line-height:1.7;}
+.banner-cta{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.3);color:var(--white);padding:12px 28px;border-radius:8px;font-size:13px;font-weight:400;letter-spacing:1px;transition:var(--transition);}
+.banner-cta:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.5);}
+.banner-visual{position:relative;z-index:1;display:flex;gap:12px;}
+.mini-card{width:80px;height:112px;background:rgba(255,255,255,0.08);border-radius:8px;border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;}
+.mini-card:nth-child(2){transform:translateY(-16px);}
+.mini-card svg{opacity:0.2;}
+
+/* ===== EDITIONS SECTION ===== */
+.editions-section{padding:80px 0;}
+.editions-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;}
+.edition-card{border-radius:var(--radius);border:1px solid var(--gray-200);padding:20px 16px;text-align:center;cursor:pointer;transition:var(--transition);background:var(--white);}
+.edition-card:hover{border-color:var(--navy);box-shadow:var(--shadow);}
+.edition-icon{width:48px;height:48px;margin:0 auto 12px;background:var(--gray-100);border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.edition-card h4{font-size:12px;font-weight:500;margin-bottom:2px;line-height:1.3;}
+.edition-card span{font-size:11px;font-weight:300;color:var(--gray-400);}
+
+/* ===== TRUST SECTION ===== */
+.trust-section{padding:60px 0;border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;text-align:center;}
+.trust-item svg{margin:0 auto 12px;opacity:0.4;}
+.trust-item h4{font-size:13px;font-weight:500;margin-bottom:4px;}
+.trust-item p{font-size:12px;font-weight:300;color:var(--gray-500);}
+
+/* ===== FOOTER ===== */
+.footer{background:var(--navy);color:var(--white);padding:64px 0 32px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+.footer-brand .logo{margin-bottom:16px;}
+.footer-brand .logo .logo-sk{color:var(--white);}
+.footer-brand .logo .logo-tcg{color:var(--navy-light);}
+.footer-desc{font-size:13px;font-weight:300;opacity:0.5;line-height:1.8;max-width:280px;}
+.footer h5{font-size:11px;font-weight:500;letter-spacing:4px;text-transform:uppercase;opacity:0.3;margin-bottom:16px;}
+.footer-links a{display:block;font-size:13px;font-weight:300;opacity:0.6;padding:4px 0;transition:var(--transition);}
+.footer-links a:hover{opacity:1;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;display:flex;justify-content:space-between;align-items:center;}
+.footer-copy{font-size:11px;font-weight:300;opacity:0.3;letter-spacing:1px;}
+.footer-payments{display:flex;gap:12px;opacity:0.3;}
+.footer-payments span{font-size:11px;font-weight:400;background:rgba(255,255,255,0.1);padding:4px 10px;border-radius:4px;}
+
+/* ===== PAGE VIEWS ===== */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ===== PRODUCT LISTING PAGE ===== */
+.page-header{background:var(--navy);color:var(--white);padding:48px 0;}
+.page-header h1{font-size:32px;font-weight:200;letter-spacing:2px;}
+.page-header .breadcrumb{font-size:12px;font-weight:300;opacity:0.4;margin-bottom:8px;letter-spacing:1px;}
+.page-header .breadcrumb a{opacity:0.7;transition:var(--transition);}
+.page-header .breadcrumb a:hover{opacity:1;}
+.listing-page{padding:40px 0 80px;}
+.listing-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid var(--gray-200);}
+.listing-count{font-size:13px;font-weight:300;color:var(--gray-500);}
+.listing-sort{display:flex;align-items:center;gap:8px;}
+.listing-sort label{font-size:12px;font-weight:400;color:var(--gray-500);}
+.listing-sort select{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;border:1px solid var(--gray-200);border-radius:6px;padding:6px 12px;background:var(--white);color:var(--black);cursor:pointer;}
+.filters-bar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.filter-chip{font-size:12px;font-weight:400;color:var(--gray-600);border:1px solid var(--gray-200);padding:6px 16px;border-radius:20px;cursor:pointer;transition:var(--transition);}
+.filter-chip:hover,.filter-chip.active{background:var(--navy);color:var(--white);border-color:var(--navy);}
+
+/* ===== PRODUCT DETAIL PAGE ===== */
+.detail-page{padding:40px 0 80px;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;}
+.detail-image{aspect-ratio:1/1;background:var(--gray-100);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;border:1px solid var(--gray-200);}
+.detail-info h1{font-size:28px;font-weight:300;letter-spacing:0.5px;margin-bottom:4px;line-height:1.3;}
+.detail-brand{font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--gray-400);margin-bottom:16px;}
+.detail-price{font-size:36px;font-weight:600;color:var(--black);margin-bottom:4px;}
+.detail-installments{font-size:13px;font-weight:300;color:var(--gray-500);margin-bottom:24px;}
+.detail-divider{height:1px;background:var(--gray-200);margin:24px 0;}
+.detail-description{font-size:14px;font-weight:300;color:var(--gray-600);line-height:1.8;margin-bottom:24px;}
+.detail-specs{margin-bottom:24px;}
+.detail-specs dt{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gray-400);margin-bottom:2px;}
+.detail-specs dd{font-size:14px;font-weight:400;color:var(--black);margin-bottom:12px;}
+.detail-cta{display:flex;gap:12px;margin-top:32px;}
+.btn-primary{background:var(--navy);color:var(--white);padding:16px 40px;border-radius:8px;font-size:14px;font-weight:500;letter-spacing:1px;transition:var(--transition);flex:1;text-align:center;}
+.btn-primary:hover{background:var(--navy-mid);transform:translateY(-1px);box-shadow:var(--shadow-hover);}
+.btn-secondary{border:1px solid var(--gray-200);color:var(--black);padding:16px 24px;border-radius:8px;font-size:14px;font-weight:400;transition:var(--transition);display:flex;align-items:center;justify-content:center;}
+.btn-secondary:hover{border-color:var(--gray-400);}
+.qty-control{display:flex;align-items:center;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;}
+.qty-control button{width:40px;height:44px;font-size:18px;font-weight:300;color:var(--gray-600);transition:var(--transition);}
+.qty-control button:hover{background:var(--gray-100);}
+.qty-control span{width:44px;text-align:center;font-size:15px;font-weight:500;}
+
+/* ===== CART SIDEBAR ===== */
+.cart-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.5);z-index:3000;display:none;backdrop-filter:blur(4px);}
+.cart-overlay.active{display:block;}
+.cart-sidebar{position:fixed;top:0;right:0;width:420px;max-width:90vw;height:100vh;background:var(--white);z-index:3001;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;}
+.cart-sidebar.active{transform:translateX(0);}
+.cart-header{display:flex;align-items:center;justify-content:space-between;padding:24px;border-bottom:1px solid var(--gray-200);}
+.cart-header h2{font-size:18px;font-weight:500;}
+.cart-close{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:var(--transition);}
+.cart-close:hover{background:var(--gray-100);}
+.cart-items{flex:1;overflow-y:auto;padding:24px;}
+.cart-item{display:flex;gap:16px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--gray-100);}
+.cart-item-img{width:72px;height:72px;background:var(--gray-100);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.cart-item-img svg{opacity:0.15;}
+.cart-item-info{flex:1;}
+.cart-item-name{font-size:13px;font-weight:500;margin-bottom:2px;}
+.cart-item-edition{font-size:11px;font-weight:300;color:var(--gray-400);margin-bottom:8px;}
+.cart-item-bottom{display:flex;align-items:center;justify-content:space-between;}
+.cart-item-price{font-size:14px;font-weight:600;}
+.cart-item-qty{font-size:12px;color:var(--gray-500);}
+.cart-item-remove{font-size:11px;color:var(--gray-400);cursor:pointer;transition:var(--transition);}
+.cart-item-remove:hover{color:var(--red);}
+.cart-footer{padding:24px;border-top:1px solid var(--gray-200);}
+.cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.cart-total-label{font-size:14px;font-weight:400;color:var(--gray-600);}
+.cart-total-value{font-size:24px;font-weight:600;}
+.cart-installments{font-size:12px;font-weight:300;color:var(--gray-400);margin-bottom:20px;}
+.cart-checkout{width:100%;background:var(--navy);color:var(--white);padding:16px;border-radius:8px;font-size:14px;font-weight:500;letter-spacing:1px;transition:var(--transition);text-align:center;}
+.cart-checkout:hover{background:var(--navy-mid);}
+.cart-empty{text-align:center;padding:60px 24px;color:var(--gray-400);}
+.cart-empty svg{margin:0 auto 16px;opacity:0.15;}
+.cart-empty p{font-size:14px;font-weight:300;}
+
+/* ===== ABOUT PAGE ===== */
+.about-section{padding:80px 0;}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+.about-text h2{font-size:28px;font-weight:200;margin-bottom:20px;letter-spacing:1px;}
+.about-text p{font-size:14px;font-weight:300;color:var(--gray-600);line-height:1.9;margin-bottom:16px;}
+.about-visual{background:var(--navy);border-radius:var(--radius-lg);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;}
+.about-visual .logo-sk{font-size:64px;color:var(--white);}
+.about-visual .logo-tcg{font-size:64px;color:var(--navy-light);}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px;}
+.value-card{padding:32px;border:1px solid var(--gray-200);border-radius:var(--radius);text-align:center;}
+.value-card h4{font-size:14px;font-weight:500;margin-bottom:8px;}
+.value-card p{font-size:13px;font-weight:300;color:var(--gray-500);line-height:1.7;}
+
+/* ===== FAQ PAGE ===== */
+.faq-section{padding:80px 0;max-width:700px;margin:0 auto;}
+.faq-item{border-bottom:1px solid var(--gray-200);padding:20px 0;}
+.faq-question{font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:var(--transition);}
+.faq-question:hover{color:var(--navy-mid);}
+.faq-question::after{content:'+';font-size:20px;font-weight:200;color:var(--gray-400);transition:var(--transition);}
+.faq-item.open .faq-question::after{content:'−';}
+.faq-answer{max-height:0;overflow:hidden;transition:max-height 0.3s ease;font-size:14px;font-weight:300;color:var(--gray-600);line-height:1.8;}
+.faq-item.open .faq-answer{max-height:300px;padding-top:12px;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .cat-grid,.product-grid{grid-template-columns:repeat(2,1fr);}
+  .editions-grid{grid-template-columns:repeat(3,1fr);}
+  .trust-grid{grid-template-columns:repeat(2,1fr);}
+  .footer-grid{grid-template-columns:repeat(2,1fr);}
+  .detail-grid{grid-template-columns:1fr;}
+  .banner-card{flex-direction:column;gap:32px;}
+  .about-grid{grid-template-columns:1fr;}
+  .nav{display:none;}
+}
+@media(max-width:600px){
+  .cat-grid,.product-grid{grid-template-columns:1fr;}
+  .editions-grid{grid-template-columns:repeat(2,1fr);}
+  .trust-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr;}
+  .hero-title{font-size:32px;}
+  .values-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announcement">
+  <strong>Frete grátis</strong> para compras acima de R$ 299 — Região Sudeste
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container header-inner">
+    <div class="logo" onclick="navigate('home')">
+      <span class="logo-sk">SK</span><span class="logo-tcg">TCG</span>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-link has-dropdown" href="#">
+        Produtos
+        <div class="dropdown">
+          <a href="#" onclick="navigate('booster-packs');return false;">Booster Packs</a>
+          <a href="#" onclick="navigate('boxes');return false;">Boxes &amp; ETBs</a>
+          <a href="#" onclick="navigate('singles');return false;">Cartas Individuais</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" onclick="navigate('graded');return false;">Cartas Graduadas</a>
+          <a href="#" onclick="navigate('accessories');return false;">Acessórios</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" onclick="navigate('all');return false;">Ver Tudo</a>
+        </div>
+      </a>
+      <a class="nav-link has-dropdown" href="#">
+        Edições
+        <div class="dropdown">
+          <a href="#" onclick="navigate('edition','Jornada Juntos');return false;">Jornada Juntos</a>
+          <a href="#" onclick="navigate('edition','Destinos Brilhantes');return false;">Destinos Brilhantes</a>
+          <a href="#" onclick="navigate('edition','Fenda Paradoxal');return false;">Fenda Paradoxal</a>
+          <a href="#" onclick="navigate('edition','Forças Temporais');return false;">Forças Temporais</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" onclick="navigate('editions');return false;">Todas as Edições</a>
+        </div>
+      </a>
+      <a class="nav-link" href="#" onclick="navigate('about');return false;">Sobre</a>
+      <a class="nav-link" href="#" onclick="navigate('faq');return false;">FAQ</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="search-toggle" onclick="toggleSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Buscar...
+      </button>
+      <button class="cart-btn" onclick="toggleCart()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span class="cart-count" id="cartCount">2</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="toggleSearch()">
+  <div class="search-box" onclick="event.stopPropagation()">
+    <input type="text" class="search-input" placeholder="Buscar produtos, edições, cartas..." autofocus>
+    <div class="search-hints">
+      <span class="search-hint" onclick="navigate('booster-packs')">Booster Packs</span>
+      <span class="search-hint" onclick="navigate('boxes')">ETBs</span>
+      <span class="search-hint" onclick="navigate('singles')">Cartas Graduadas</span>
+      <span class="search-hint" onclick="navigate('edition','Jornada Juntos')">Jornada Juntos</span>
+      <span class="search-hint" onclick="navigate('edition','Destinos Brilhantes')">Destinos Brilhantes</span>
+    </div>
+  </div>
+</div>
+
+<!-- CART OVERLAY -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-header">
+    <h2>Carrinho</h2>
+    <button class="cart-close" onclick="toggleCart()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="cart-items">
+    <div class="cart-item">
+      <div class="cart-item-img">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      </div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">Booster Box — Jornada Juntos</div>
+        <div class="cart-item-edition">Pokémon TCG · 36 packs</div>
+        <div class="cart-item-bottom">
+          <span class="cart-item-price">R$ 849,90</span>
+          <span class="cart-item-qty">Qtd: 1</span>
+        </div>
+        <span class="cart-item-remove">Remover</span>
+      </div>
+    </div>
+    <div class="cart-item">
+      <div class="cart-item-img">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      </div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">ETB — Destinos Brilhantes</div>
+        <div class="cart-item-edition">Pokémon TCG · 10 packs</div>
+        <div class="cart-item-bottom">
+          <span class="cart-item-price">R$ 349,90</span>
+          <span class="cart-item-qty">Qtd: 1</span>
+        </div>
+        <span class="cart-item-remove">Remover</span>
+      </div>
+    </div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-value">R$ 1.199,80</span>
+    </div>
+    <div class="cart-installments">ou 12x de R$ 99,98 sem juros</div>
+    <button class="cart-checkout">Finalizar Compra</button>
+  </div>
+</div>
+
+<!-- ===================== PAGE: HOME ===================== -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-label">Nova Coleção Disponível</div>
+        <h1 class="hero-title"><strong>Jornada Juntos</strong><br>já está aqui.</h1>
+        <p class="hero-desc">A mais nova expansão de Pokémon TCG chegou na SK TCG. Booster Packs, Boxes e ETBs com envio seguro para todo o Brasil.</p>
+        <a class="hero-cta" href="#" onclick="navigate('edition','Jornada Juntos');return false;">
+          Explorar Coleção
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="categories">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Categorias</h2>
+        <a class="section-link" href="#" onclick="navigate('all');return false;">Ver tudo →</a>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card" onclick="navigate('booster-packs')">
+          <div class="cat-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>Booster Packs</h3>
+          <p>Pacotes individuais de todas as edições</p>
+        </div>
+        <div class="cat-card" onclick="navigate('boxes')">
+          <div class="cat-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <h3>Boxes &amp; ETBs</h3>
+          <p>Booster Boxes, Elite Trainer Boxes e coleções</p>
+        </div>
+        <div class="cat-card" onclick="navigate('singles')">
+          <div class="cat-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><rect x="2" y="4" width="14" height="18" rx="2"/><rect x="8" y="2" width="14" height="18" rx="2"/></svg>
+          </div>
+          <h3>Cartas Individuais</h3>
+          <p>Singles avulsas e cartas graduadas (PSA/BGS)</p>
+        </div>
+        <div class="cat-card" onclick="navigate('accessories')">
+          <div class="cat-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>Acessórios</h3>
+          <p>Sleeves, deck boxes, playmats e mais</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED PRODUCTS -->
+  <section class="products-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Destaques</h2>
+        <a class="section-link" href="#" onclick="navigate('all');return false;">Ver todos →</a>
+      </div>
+      <div class="product-grid" id="featuredGrid"></div>
+    </div>
+  </section>
+
+  <!-- BANNER -->
+  <section class="featured-banner">
+    <div class="container">
+      <div class="banner-card">
+        <div class="banner-content">
+          <div class="banner-label">Cartas Graduadas</div>
+          <h2 class="banner-title">Invista em <strong>cards certificados</strong></h2>
+          <p class="banner-desc">Cartas avaliadas por PSA e BGS com nota garantida. Cada card acompanha case protetor e certificado de autenticidade.</p>
+          <a class="banner-cta" href="#" onclick="navigate('graded');return false;">
+            Ver Cartas Graduadas
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="banner-visual">
+          <div class="mini-card"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+          <div class="mini-card"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+          <div class="mini-card"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDITIONS -->
+  <section class="editions-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Edições Recentes</h2>
+        <a class="section-link" href="#" onclick="navigate('editions');return false;">Todas as edições →</a>
+      </div>
+      <div class="editions-grid" id="editionsGrid"></div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section class="trust-section">
+    <div class="container">
+      <div class="trust-grid">
+        <div class="trust-item">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <h4>100% Original</h4>
+          <p>Todos os produtos são autênticos e de procedência verificada</p>
+        </div>
+        <div class="trust-item">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <h4>Envio Seguro</h4>
+          <p>Embalagem reforçada para proteger suas cartas durante o transporte</p>
+        </div>
+        <div class="trust-item">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <h4>Compra Segura</h4>
+          <p>Pagamento criptografado com checkout seguro</p>
+        </div>
+        <div class="trust-item">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <h4>Atendimento</h4>
+          <p>Suporte humanizado por WhatsApp e e-mail</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===================== PAGE: PRODUCT LISTING ===================== -->
+<div class="page" id="page-listing">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="#" onclick="navigate('home');return false;">Home</a> / <span id="listingBreadcrumb">Produtos</span></div>
+      <h1 id="listingTitle">Todos os Produtos</h1>
+    </div>
+  </div>
+  <div class="listing-page">
+    <div class="container">
+      <div class="listing-toolbar">
+        <span class="listing-count" id="listingCount">24 produtos</span>
+        <div class="listing-sort">
+          <label>Ordenar:</label>
+          <select>
+            <option>Mais relevantes</option>
+            <option>Menor preço</option>
+            <option>Maior preço</option>
+            <option>Mais recentes</option>
+          </select>
+        </div>
+      </div>
+      <div class="filters-bar" id="filtersBar"></div>
+      <div class="product-grid" id="listingGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: PRODUCT DETAIL ===================== -->
+<div class="page" id="page-detail">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="#" onclick="navigate('home');return false;">Home</a> / <a href="#" id="detailBackLink">Produtos</a> / <span id="detailBreadcrumb">Produto</span></div>
+      <h1 id="detailPageTitle" style="font-size:22px;font-weight:300;opacity:0.6;"></h1>
+    </div>
+  </div>
+  <div class="detail-page">
+    <div class="container">
+      <div class="detail-grid">
+        <div class="detail-image">
+          <div class="product-placeholder">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Imagem do produto</span>
+          </div>
+        </div>
+        <div class="detail-info" id="detailInfo">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: EDITIONS ===================== -->
+<div class="page" id="page-editions">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="#" onclick="navigate('home');return false;">Home</a> / Edições</div>
+      <h1>Todas as Edições</h1>
+    </div>
+  </div>
+  <div class="listing-page">
+    <div class="container">
+      <div class="editions-grid" id="allEditionsGrid" style="grid-template-columns:repeat(4,1fr);gap:20px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: ABOUT ===================== -->
+<div class="page" id="page-about">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="#" onclick="navigate('home');return false;">Home</a> / Sobre</div>
+      <h1>Sobre a SK TCG</h1>
+    </div>
+  </div>
+  <section class="about-section">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-text">
+          <h2>Pokémon TCG original, com quem entende do assunto.</h2>
+          <p>A SK TCG nasceu da paixão pelo universo Pokémon Trading Card Game e da vontade de criar uma experiência de compra à altura do que os colecionadores e jogadores brasileiros merecem.</p>
+          <p>Nosso compromisso é oferecer produtos 100% originais, com atendimento especializado e envio seguro para todo o Brasil. Cada pedido é tratado com o cuidado que suas cartas merecem.</p>
+          <p>Com foco na região Sudeste e envios via Correios para todo o país, trabalhamos para que você tenha acesso às melhores expansões, boxes e singles do mercado.</p>
+        </div>
+        <div class="about-visual">
+          <div class="logo" style="gap:8px;">
+            <span class="logo-sk" style="font-size:64px;color:#FAFAFA;">SK</span>
+            <span class="logo-tcg" style="font-size:64px;color:#2E5077;">TCG</span>
+          </div>
+        </div>
+      </div>
+      <div class="values-grid">
+        <div class="value-card">
+          <h4>Autenticidade</h4>
+          <p>Todos os nossos produtos são adquiridos de distribuidores oficiais. Sem réplicas, sem surpresas.</p>
+        </div>
+        <div class="value-card">
+          <h4>Experiência</h4>
+          <p>Do momento da escolha até a entrega, cada etapa é pensada para ser simples e segura.</p>
+        </div>
+        <div class="value-card">
+          <h4>Comunidade</h4>
+          <p>Mais do que uma loja, somos parte da comunidade TCG brasileira. Compartilhamos a mesma paixão.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== PAGE: FAQ ===================== -->
+<div class="page" id="page-faq">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="#" onclick="navigate('home');return false;">Home</a> / Perguntas Frequentes</div>
+      <h1>Perguntas Frequentes</h1>
+    </div>
+  </div>
+  <section class="faq-section" style="padding-left:24px;padding-right:24px;">
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Os produtos são originais?</div>
+      <div class="faq-answer">Sim, 100%. Todos os nossos produtos são adquiridos diretamente de distribuidores oficiais da The Pokémon Company. Não trabalhamos com réplicas ou produtos de procedência duvidosa.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Quais são as formas de pagamento?</div>
+      <div class="faq-answer">Aceitamos cartão de crédito (até 12x sem juros), PIX com desconto, boleto bancário e cartão de débito. Todos os pagamentos são processados com criptografia e checkout seguro.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Qual o prazo de entrega?</div>
+      <div class="faq-answer">Realizamos envios via Correios (PAC e SEDEX). Os pedidos são despachados em até 2 dias úteis. O prazo de entrega varia conforme a região: Sudeste (3-5 dias úteis), demais regiões (5-12 dias úteis).</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Como as cartas são embaladas?</div>
+      <div class="faq-answer">Cada pedido é embalado com extremo cuidado: cartas individuais vão em sleeves + top loaders, produtos lacrados em plástico bolha, e tudo em caixas reforçadas. Priorizamos a integridade do seu produto.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Posso trocar ou devolver um produto?</div>
+      <div class="faq-answer">Sim. Seguimos a política de trocas e devoluções conforme o Código de Defesa do Consumidor. Em caso de defeito ou avaria no transporte, entre em contato em até 7 dias após o recebimento.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Vocês vendem cartas avulsas não graduadas?</div>
+      <div class="faq-answer">Sim, trabalhamos tanto com cartas graduadas (PSA, BGS) quanto com singles avulsas em condição NM (Near Mint). Todas as condições são descritas no anúncio do produto.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">Tem loja física?</div>
+      <div class="faq-answer">No momento, operamos exclusivamente online. Isso nos permite oferecer preços mais competitivos e atender todo o Brasil. Estamos presentes também nos principais marketplaces.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">O que são cartas graduadas?</div>
+      <div class="faq-answer">Cartas graduadas são cards que foram avaliados e encapsulados por empresas especializadas como PSA ou BGS. Cada carta recebe uma nota de 1 a 10 que atesta sua condição física. Cards com nota 10 (Gem Mint) são os mais valiosos.</div>
+    </div>
+  </section>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo" onclick="navigate('home')">
+          <span class="logo-sk" style="font-size:22px;color:var(--white);">SK</span>
+          <span class="logo-tcg" style="font-size:22px;color:var(--navy-light);">TCG</span>
+        </div>
+        <p class="footer-desc">Pokémon TCG original, com quem entende do assunto e você pode confiar. Envio seguro para todo o Brasil.</p>
+      </div>
+      <div>
+        <h5>Produtos</h5>
+        <div class="footer-links">
+          <a href="#" onclick="navigate('booster-packs');return false;">Booster Packs</a>
+          <a href="#" onclick="navigate('boxes');return false;">Boxes &amp; ETBs</a>
+          <a href="#" onclick="navigate('singles');return false;">Cartas Individuais</a>
+          <a href="#" onclick="navigate('graded');return false;">Cartas Graduadas</a>
+          <a href="#" onclick="navigate('accessories');return false;">Acessórios</a>
+        </div>
+      </div>
+      <div>
+        <h5>Institucional</h5>
+        <div class="footer-links">
+          <a href="#" onclick="navigate('about');return false;">Sobre</a>
+          <a href="#" onclick="navigate('faq');return false;">Perguntas Frequentes</a>
+          <a href="#">Termos de Uso</a>
+          <a href="#">Política de Privacidade</a>
+          <a href="#">Trocas e Devoluções</a>
+        </div>
+      </div>
+      <div>
+        <h5>Contato</h5>
+        <div class="footer-links">
+          <a href="#">contato@sktcg.com.br</a>
+          <a href="#">WhatsApp</a>
+          <a href="#">Instagram</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">&copy; 2026 SK TCG. Todos os direitos reservados.</span>
+      <div class="footer-payments">
+        <span>PIX</span>
+        <span>Visa</span>
+        <span>Master</span>
+        <span>Boleto</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===== DATA =====
+const editions = [
+  {name:'Jornada Juntos', code:'SV09', year:'2025', products:28},
+  {name:'Destinos Brilhantes', code:'SV08', year:'2025', products:22},
+  {name:'Fenda Paradoxal', code:'SV07', year:'2024', products:18},
+  {name:'Forças Temporais', code:'SV06', year:'2024', products:20},
+  {name:'Chamas Obsidianas', code:'SV05', year:'2024', products:16},
+  {name:'Máscara Crepuscular', code:'SV04', year:'2024', products:14},
+  {name:'Evoluções em Paldea', code:'SV03', year:'2023', products:12},
+  {name:'Obsidiana 151', code:'SV02', year:'2023', products:15},
+  {name:'Escarlate e Violeta', code:'SV01', year:'2023', products:18},
+  {name:'Reinado Arrepiante', code:'SS12', year:'2022', products:8},
+  {name:'Estrelas Radiantes', code:'SS11', year:'2022', products:6},
+  {name:'Origem Perdida', code:'SS10', year:'2022', products:5},
+];
+
+const products = [
+  // BOOSTER PACKS
+  {id:1, name:'Booster Pack — Jornada Juntos', edition:'Jornada Juntos', category:'booster-packs', price:24.90, badge:'new', stock:'in', desc:'Pacote individual contendo 10 cartas da expansão Jornada Juntos (SV09). Cada pack pode conter cartas de diferentes raridades, incluindo chances de Illustration Rare e Special Art Rare.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'10 cartas por pack',Idioma:'Português',Origem:'Oficial — The Pokémon Company'}},
+  {id:2, name:'Booster Pack — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'booster-packs', price:22.90, stock:'in', desc:'Pack individual com 10 cartas da expansão Destinos Brilhantes.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
+  {id:3, name:'Booster Pack — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'booster-packs', price:19.90, stock:'in', desc:'Pack individual da expansão Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
+  {id:4, name:'Booster Pack — Forças Temporais', edition:'Forças Temporais', category:'booster-packs', price:18.90, badge:'sale', oldPrice:22.90, stock:'in', desc:'Pack individual da expansão Forças Temporais com desconto.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
+  {id:5, name:'Booster Pack — Obsidiana 151', edition:'Obsidiana 151', category:'booster-packs', price:39.90, badge:'hot', stock:'low', desc:'Pack da aclamada expansão Obsidiana 151. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 cartas por pack',Idioma:'Português/Japonês'}},
+  {id:6, name:'Booster Pack — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'booster-packs', price:21.90, stock:'in', desc:'Pack individual da expansão Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 cartas por pack'}},
+
+  // BOXES & ETBs
+  {id:10, name:'Booster Box — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', price:849.90, badge:'new', stock:'in', desc:'Caixa lacrada contendo 36 Booster Packs da expansão Jornada Juntos. Ideal para colecionadores e jogadores que querem maximizar suas chances de pulls raros.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'36 Booster Packs',Idioma:'Português',Total:'360 cartas'}},
+  {id:11, name:'ETB — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'boxes', price:349.90, stock:'in', desc:'Elite Trainer Box com 10 boosters, sleeves, contadores de dano, moeda e mais.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 Booster Packs + acessórios',Idioma:'Português'}},
+  {id:12, name:'Booster Box — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'boxes', price:749.90, stock:'in', desc:'Caixa lacrada com 36 packs de Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'36 Booster Packs'}},
+  {id:13, name:'ETB — Obsidiana 151', edition:'Obsidiana 151', category:'boxes', price:599.90, badge:'hot', stock:'low', desc:'Elite Trainer Box da coleção Obsidiana 151. Estoque limitado.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 Booster Packs + acessórios'}},
+  {id:14, name:'Booster Box — Forças Temporais', edition:'Forças Temporais', category:'boxes', price:699.90, badge:'sale', oldPrice:799.90, stock:'in', desc:'Box lacrado com 36 packs. Promoção por tempo limitado.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'36 Booster Packs'}},
+  {id:15, name:'Booster Bundle — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', price:149.90, badge:'new', stock:'in', desc:'Bundle com 6 Booster Packs de Jornada Juntos.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'6 Booster Packs'}},
+  {id:16, name:'ETB — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'boxes', price:299.90, stock:'in', desc:'Elite Trainer Box da coleção Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 Booster Packs + acessórios'}},
+
+  // SINGLES
+  {id:20, name:'Charizard ex SAR', edition:'Obsidiana 151', category:'singles', price:489.90, badge:'hot', stock:'in', desc:'Carta individual Charizard ex Special Art Rare da coleção Obsidiana 151. Condição Near Mint (NM).', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)',Número:'#201/165'}},
+  {id:21, name:'Pikachu ex IR', edition:'Jornada Juntos', category:'singles', price:129.90, badge:'new', stock:'in', desc:'Pikachu ex Illustration Rare da nova expansão.', specs:{Edição:'Jornada Juntos (SV09)',Raridade:'Illustration Rare (IR)',Condição:'Near Mint (NM)'}},
+  {id:22, name:'Mewtwo ex SAR', edition:'Obsidiana 151', category:'singles', price:349.90, stock:'in', desc:'Mewtwo ex Special Art Rare. Condição NM.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)'}},
+  {id:23, name:'Gardevoir ex UR', edition:'Destinos Brilhantes', category:'singles', price:89.90, stock:'in', desc:'Gardevoir ex Ultra Rare. Condição NM.', specs:{Edição:'Destinos Brilhantes (SV08)',Raridade:'Ultra Rare (UR)',Condição:'Near Mint (NM)'}},
+  {id:24, name:'Mew ex HR', edition:'Obsidiana 151', category:'singles', price:199.90, stock:'low', desc:'Mew ex Hyper Rare gold. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Hyper Rare (HR)',Condição:'Near Mint (NM)'}},
+
+  // GRADED
+  {id:30, name:'Charizard VMAX PSA 10', edition:'Reinado Arrepiante', category:'graded', price:2499.90, badge:'graded', stock:'in', desc:'Charizard VMAX #74 graduada pela PSA com nota 10 (Gem Mint). Acompanha case original PSA e certificado.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'PSA 10 — Gem Mint',Certificado:'#87456321',Encapsulada:'Sim — case PSA'}},
+  {id:31, name:'Pikachu V FA PSA 9', edition:'Estrelas Radiantes', category:'graded', price:599.90, badge:'graded', stock:'in', desc:'Pikachu V Full Art graduada PSA 9.', specs:{Edição:'Estrelas Radiantes (SS11)',Nota:'PSA 9 — Mint',Encapsulada:'Sim — case PSA'}},
+  {id:32, name:'Umbreon VMAX Alt Art BGS 9.5', edition:'Reinado Arrepiante', category:'graded', price:3999.90, badge:'graded', stock:'in', desc:'Uma das cartas mais procuradas da era moderna, graduada BGS 9.5.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'BGS 9.5 — Gem Mint',Encapsulada:'Sim — case BGS'}},
+
+  // ACCESSORIES
+  {id:40, name:'Sleeves Ultra Pro Pokéball', edition:'Acessório', category:'accessories', price:29.90, stock:'in', desc:'Pacote com 65 sleeves oficiais Ultra Pro com estampa de Pokéball.', specs:{Quantidade:'65 unidades',Material:'Polipropileno',Tamanho:'Standard (66x91mm)'}},
+  {id:41, name:'Deck Box Ultra Pro — Pikachu', edition:'Acessório', category:'accessories', price:49.90, stock:'in', desc:'Deck box oficial com capacidade para 80+ cartas com sleeves.', specs:{Capacidade:'80+ cartas',Material:'Plástico rígido',Fechamento:'Magnético'}},
+  {id:42, name:'Playmat Oficial — Charizard', edition:'Acessório', category:'accessories', price:149.90, stock:'low', desc:'Playmat oficial de jogo com estampa de Charizard. Superfície premium.', specs:{Tamanho:'60x35cm',Material:'Borracha + tecido',Superfície:'Anti-deslizante'}},
+  {id:43, name:'Top Loader Ultra Pro (25un)', edition:'Acessório', category:'accessories', price:19.90, stock:'in', desc:'Pack com 25 top loaders rígidos para proteção de cartas.', specs:{Quantidade:'25 unidades',Material:'PVC rígido',Tamanho:'3x4"'}},
+  {id:44, name:'Álbum 9 Bolsos — 360 Cards', edition:'Acessório', category:'accessories', price:89.90, stock:'in', desc:'Álbum premium com páginas de 9 bolsos. Comporta 360 cartas.', specs:{Capacidade:'360 cartas',Páginas:'20 (9 bolsos cada)',Material:'Couro sintético'}},
+];
+
+const categoryLabels = {
+  'booster-packs':'Booster Packs','boxes':'Boxes & ETBs','singles':'Cartas Individuais',
+  'graded':'Cartas Graduadas','accessories':'Acessórios','all':'Todos os Produtos'
+};
+
+// ===== RENDER FUNCTIONS =====
+function renderProductCard(p){
+  const badgeHTML = p.badge ? `<span class="badge badge-${p.badge}">${{new:'Novo',sale:'Oferta',hot:'Destaque',graded:'Graduada'}[p.badge]}</span>` : '';
+  const oldPriceHTML = p.oldPrice ? `<span class="price-old product-price-old">R$ ${p.oldPrice.toFixed(2).replace('.',',')}</span> ` : '';
+  const stockClass = p.stock==='low'?'low':p.stock==='out'?'out':'';
+  const stockText = p.stock==='in'?'Em estoque':p.stock==='low'?'Últimas unidades':'Esgotado';
+  return `
+    <div class="product-card" onclick="navigate('detail',${p.id})">
+      <div class="product-img">
+        ${badgeHTML}
+        <div class="product-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Imagem</span>
+        </div>
+      </div>
+      <div class="product-info">
+        <div class="product-brand">Pokémon TCG</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-edition">${p.edition}</div>
+        <div class="product-footer">
+          <div>
+            ${oldPriceHTML}
+            <span class="product-price">R$ ${p.price.toFixed(2).replace('.',',')}</span>
+          </div>
+          <button class="add-cart-btn" onclick="event.stopPropagation();" title="Adicionar ao carrinho">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="product-stock ${stockClass}">${stockText}</div>
+      </div>
+    </div>`;
+}
+
+function renderEditionCard(e, large){
+  const pad = large ? 'padding:28px 20px;' : '';
+  return `
+    <div class="edition-card" style="${pad}" onclick="navigate('edition','${e.name}')">
+      <div class="edition-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+      <h4>${e.name}</h4>
+      <span>${e.code} · ${e.year}</span>
+    </div>`;
+}
+
+// ===== NAVIGATION =====
+function navigate(page, param){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  window.scrollTo({top:0, behavior:'instant'});
+
+  if(page==='home'){
+    document.getElementById('page-home').classList.add('active');
+  }
+  else if(page==='about'){
+    document.getElementById('page-about').classList.add('active');
+  }
+  else if(page==='faq'){
+    document.getElementById('page-faq').classList.add('active');
+  }
+  else if(page==='editions'){
+    document.getElementById('page-editions').classList.add('active');
+    document.getElementById('allEditionsGrid').innerHTML = editions.map(e=>renderEditionCard(e,true)).join('');
+  }
+  else if(page==='edition'){
+    const filtered = products.filter(p=>p.edition===param);
+    showListing(param, `Edição: ${param}`, filtered, ['Booster Packs','Boxes','Singles']);
+  }
+  else if(page==='booster-packs'){
+    showListing('Booster Packs','Booster Packs', products.filter(p=>p.category==='booster-packs'), editions.slice(0,5).map(e=>e.name));
+  }
+  else if(page==='boxes'){
+    showListing('Boxes & ETBs','Boxes & ETBs', products.filter(p=>p.category==='boxes'), ['Booster Box','ETB','Bundle']);
+  }
+  else if(page==='singles'){
+    showListing('Cartas Individuais','Cartas Individuais', products.filter(p=>p.category==='singles'), ['Near Mint','Full Art','Special Art Rare']);
+  }
+  else if(page==='graded'){
+    showListing('Cartas Graduadas','Cartas Graduadas', products.filter(p=>p.category==='graded'), ['PSA 10','PSA 9','BGS 9.5']);
+  }
+  else if(page==='accessories'){
+    showListing('Acessórios','Acessórios', products.filter(p=>p.category==='accessories'), ['Sleeves','Deck Box','Playmat','Top Loader']);
+  }
+  else if(page==='all'){
+    showListing('Todos os Produtos','Todos os Produtos', products, Object.values(categoryLabels).slice(0,5));
+  }
+  else if(page==='detail'){
+    showDetail(param);
+  }
+}
+
+function showListing(title, breadcrumb, items, filters){
+  document.getElementById('page-listing').classList.add('active');
+  document.getElementById('listingTitle').textContent = title;
+  document.getElementById('listingBreadcrumb').textContent = breadcrumb;
+  document.getElementById('listingCount').textContent = `${items.length} produto${items.length!==1?'s':''}`;
+  document.getElementById('filtersBar').innerHTML = `<span class="filter-chip active">Todos</span>` + filters.map(f=>`<span class="filter-chip">${f}</span>`).join('');
+  document.getElementById('listingGrid').innerHTML = items.map(renderProductCard).join('');
+
+  // Filter chip toggle (visual only)
+  document.querySelectorAll('#filtersBar .filter-chip').forEach(chip=>{
+    chip.addEventListener('click',function(){
+      document.querySelectorAll('#filtersBar .filter-chip').forEach(c=>c.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+}
+
+function showDetail(productId){
+  const p = products.find(x=>x.id===productId);
+  if(!p) return;
+  document.getElementById('page-detail').classList.add('active');
+  document.getElementById('detailBreadcrumb').textContent = p.name;
+  document.getElementById('detailPageTitle').textContent = p.edition;
+  const backCat = categoryLabels[p.category] || 'Produtos';
+  document.getElementById('detailBackLink').textContent = backCat;
+  document.getElementById('detailBackLink').onclick = function(e){e.preventDefault();navigate(p.category);};
+
+  const oldPriceHTML = p.oldPrice ? `<span class="price-old" style="font-size:18px;">R$ ${p.oldPrice.toFixed(2).replace('.',',')}</span>` : '';
+  const badgeHTML = p.badge ? `<span class="badge badge-${p.badge}" style="margin-bottom:12px;">${{new:'Novo',sale:'Oferta',hot:'Destaque',graded:'Graduada'}[p.badge]}</span><br>` : '';
+  const specsHTML = p.specs ? Object.entries(p.specs).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('') : '';
+  const installment = (p.price/12).toFixed(2).replace('.',',');
+
+  document.getElementById('detailInfo').innerHTML = `
+    ${badgeHTML}
+    <div class="detail-brand">Pokémon TCG</div>
+    <h1>${p.name}</h1>
+    <div class="detail-divider"></div>
+    <div class="detail-price">${oldPriceHTML} R$ ${p.price.toFixed(2).replace('.',',')}</div>
+    <div class="detail-installments">ou 12x de R$ ${installment} sem juros · PIX com 5% de desconto</div>
+    <div class="detail-divider"></div>
+    <div class="detail-description">${p.desc}</div>
+    <dl class="detail-specs">${specsHTML}</dl>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
+      <div class="qty-control">
+        <button onclick="updateQty(-1)">−</button>
+        <span id="qtyVal">1</span>
+        <button onclick="updateQty(1)">+</button>
+      </div>
+      <div class="product-stock ${p.stock==='low'?'low':''}">${p.stock==='in'?'Em estoque':p.stock==='low'?'Últimas unidades':'Esgotado'}</div>
+    </div>
+    <div class="detail-cta">
+      <button class="btn-primary">Adicionar ao Carrinho</button>
+      <button class="btn-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </button>
+    </div>`;
+}
+
+let qty = 1;
+function updateQty(d){
+  qty = Math.max(1, Math.min(99, qty+d));
+  const el = document.getElementById('qtyVal');
+  if(el) el.textContent = qty;
+}
+
+// ===== UI HELPERS =====
+function toggleSearch(){
+  document.getElementById('searchOverlay').classList.toggle('active');
+  if(document.getElementById('searchOverlay').classList.contains('active')){
+    document.querySelector('.search-input').focus();
+  }
+}
+function toggleCart(){
+  document.getElementById('cartOverlay').classList.toggle('active');
+  document.getElementById('cartSidebar').classList.toggle('active');
+}
+function toggleFaq(el){
+  el.parentElement.classList.toggle('open');
+}
+
+// ESC to close overlays
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    document.getElementById('searchOverlay').classList.remove('active');
+    document.getElementById('cartOverlay').classList.remove('active');
+    document.getElementById('cartSidebar').classList.remove('active');
+  }
+});
+
+// ===== INIT =====
+function init(){
+  // Featured products (mix of categories)
+  const featured = [products[0], products[9], products[19], products[4], products[10], products[20], products[12], products[29]].filter(Boolean);
+  document.getElementById('featuredGrid').innerHTML = featured.map(renderProductCard).join('');
+
+  // Home editions
+  document.getElementById('editionsGrid').innerHTML = editions.slice(0,6).map(e=>renderEditionCard(e,false)).join('');
+}
+init();
+</script>
+
+</body>
+</html>
