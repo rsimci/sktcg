@@ -62,6 +62,21 @@ ul{list-style:none;}
 .search-toggle:hover{border-color:var(--gray-300);color:var(--gray-600);}
 .cart-btn{position:relative;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;}
 .cart-count{background:var(--navy);color:var(--white);font-size:9px;font-weight:600;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:absolute;top:-6px;right:-10px;}
+.account-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--gray-600);transition:var(--transition);position:relative;}
+.account-btn:hover{color:var(--black);}
+.account-dropdown{position:absolute;top:calc(100% + 12px);right:0;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:12px 0;min-width:200px;box-shadow:var(--shadow-hover);opacity:0;pointer-events:none;transform:translateY(8px);transition:var(--transition);z-index:100;}
+.account-btn:hover .account-dropdown{opacity:1;pointer-events:all;transform:translateY(0);}
+.account-dropdown a{display:block;padding:8px 20px;font-size:13px;font-weight:300;color:var(--gray-600);}
+.account-dropdown a:hover{background:var(--gray-50);color:var(--black);}
+.account-dropdown .dropdown-divider{height:1px;background:var(--gray-200);margin:6px 0;}
+
+/* ===== PRODUCT IMAGES ===== */
+.product-img img{width:100%;height:100%;object-fit:contain;transition:transform 0.4s ease;}
+.product-card:hover .product-img img{transform:scale(1.05);}
+.product-img .img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.product-img .img-placeholder svg{opacity:0.12;width:48px;height:48px;}
+.product-img .img-placeholder span{font-size:10px;font-weight:400;color:var(--gray-300);letter-spacing:2px;text-transform:uppercase;}
+.detail-image img{width:100%;height:100%;object-fit:contain;padding:20px;}
 
 /* ===== SEARCH OVERLAY ===== */
 .search-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.6);z-index:2000;display:none;align-items:flex-start;justify-content:center;padding-top:120px;backdrop-filter:blur(4px);}
@@ -107,7 +122,7 @@ ul{list-style:none;}
 .product-img{aspect-ratio:1/1;background:var(--gray-100);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:24px;}
 .product-img .badge{position:absolute;top:12px;left:12px;z-index:1;}
 .product-placeholder{width:80%;height:80%;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
-.product-placeholder svg{opacity:0.15;}
+.product-placeholder svg{width:100%;height:100%;}
 .product-placeholder span{font-size:10px;font-weight:400;color:var(--gray-300);letter-spacing:2px;text-transform:uppercase;}
 .product-info{padding:16px;}
 .product-brand{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gray-400);margin-bottom:4px;}
@@ -281,6 +296,8 @@ ul{list-style:none;}
   .banner-card{flex-direction:column;gap:32px;}
   .about-grid{grid-template-columns:1fr;}
   .nav{display:none;}
+  .hero .container{flex-direction:column!important;gap:32px!important;text-align:center;}
+  .hero-content{max-width:100%;}
 }
 @media(max-width:600px){
   .cat-grid,.product-grid{grid-template-columns:1fr;}
@@ -323,12 +340,17 @@ ul{list-style:none;}
       <a class="nav-link has-dropdown" href="#">
         Edições
         <div class="dropdown">
-          <a href="#" onclick="navigate('edition','Jornada Juntos');return false;">Jornada Juntos</a>
+          <a href="#" onclick="navigate('edition','Jornada Juntos');return false;" style="font-weight:500;color:var(--black);">Jornada Juntos <span style="font-size:9px;background:var(--navy);color:#fff;padding:2px 6px;border-radius:10px;margin-left:4px;">NOVA</span></a>
           <a href="#" onclick="navigate('edition','Destinos Brilhantes');return false;">Destinos Brilhantes</a>
           <a href="#" onclick="navigate('edition','Fenda Paradoxal');return false;">Fenda Paradoxal</a>
           <a href="#" onclick="navigate('edition','Forças Temporais');return false;">Forças Temporais</a>
+          <a href="#" onclick="navigate('edition','Chamas Obsidianas');return false;">Chamas Obsidianas</a>
+          <a href="#" onclick="navigate('edition','Máscara Crepuscular');return false;">Máscara Crepuscular</a>
           <div class="dropdown-divider"></div>
-          <a href="#" onclick="navigate('editions');return false;">Todas as Edições</a>
+          <a href="#" onclick="navigate('edition','Obsidiana 151');return false;">Obsidiana 151</a>
+          <a href="#" onclick="navigate('edition','Escarlate e Violeta');return false;">Escarlate e Violeta</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" onclick="navigate('editions');return false;" style="font-weight:500;">Todas as Edições →</a>
         </div>
       </a>
       <a class="nav-link" href="#" onclick="navigate('about');return false;">Sobre</a>
@@ -343,6 +365,16 @@ ul{list-style:none;}
       <button class="cart-btn" onclick="toggleCart()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span class="cart-count" id="cartCount">2</span>
+      </button>
+      <button class="account-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="account-dropdown">
+          <a href="#" onclick="event.preventDefault();">Entrar</a>
+          <a href="#" onclick="event.preventDefault();">Criar Conta</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" onclick="event.preventDefault();">Meus Pedidos</a>
+          <a href="#" onclick="event.preventDefault();">Favoritos</a>
+        </div>
       </button>
     </div>
   </div>
@@ -373,9 +405,7 @@ ul{list-style:none;}
   </div>
   <div class="cart-items">
     <div class="cart-item">
-      <div class="cart-item-img">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-      </div>
+      <div class="cart-item-img" id="cartItem1Img" style="overflow:hidden;padding:4px;"></div>
       <div class="cart-item-info">
         <div class="cart-item-name">Booster Box — Jornada Juntos</div>
         <div class="cart-item-edition">Pokémon TCG · 36 packs</div>
@@ -387,9 +417,7 @@ ul{list-style:none;}
       </div>
     </div>
     <div class="cart-item">
-      <div class="cart-item-img">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-      </div>
+      <div class="cart-item-img" id="cartItem2Img" style="overflow:hidden;padding:4px;"></div>
       <div class="cart-item-info">
         <div class="cart-item-name">ETB — Destinos Brilhantes</div>
         <div class="cart-item-edition">Pokémon TCG · 10 packs</div>
@@ -415,9 +443,9 @@ ul{list-style:none;}
 <div class="page active" id="page-home">
 
   <!-- HERO -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-content">
+  <section class="hero" style="padding:0;min-height:480px;display:flex;align-items:stretch;">
+    <div class="container" style="display:flex;align-items:center;gap:60px;padding-top:60px;padding-bottom:60px;width:100%;">
+      <div class="hero-content" style="flex:1;">
         <div class="hero-label">Nova Coleção Disponível</div>
         <h1 class="hero-title"><strong>Jornada Juntos</strong><br>já está aqui.</h1>
         <p class="hero-desc">A mais nova expansão de Pokémon TCG chegou na SK TCG. Booster Packs, Boxes e ETBs com envio seguro para todo o Brasil.</p>
@@ -425,6 +453,17 @@ ul{list-style:none;}
           Explorar Coleção
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
+      </div>
+      <!-- Hero visual: product showcase -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:20px;position:relative;">
+        <!-- Glow background -->
+        <div style="position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(27,94,32,0.25) 0%,transparent 70%);filter:blur(40px);"></div>
+        <!-- ETB -->
+        <div style="position:relative;z-index:2;transform:rotate(-6deg) translateY(12px);width:160px;opacity:0.85;filter:drop-shadow(0 12px 32px rgba(0,0,0,0.35));" id="heroETB"></div>
+        <!-- Booster Box (center, prominent) -->
+        <div style="position:relative;z-index:3;width:200px;filter:drop-shadow(0 16px 40px rgba(0,0,0,0.4));" id="heroBox"></div>
+        <!-- Pack -->
+        <div style="position:relative;z-index:2;transform:rotate(6deg) translateY(12px);width:110px;opacity:0.85;filter:drop-shadow(0 12px 32px rgba(0,0,0,0.35));" id="heroPack"></div>
       </div>
     </div>
   </section>
@@ -494,9 +533,9 @@ ul{list-style:none;}
           </a>
         </div>
         <div class="banner-visual">
-          <div class="mini-card"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
-          <div class="mini-card"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
-          <div class="mini-card"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/swsh7/74.png" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
+          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/swsh7/95.png" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
+          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/swsh9/157.png" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
         </div>
       </div>
     </div>
@@ -766,42 +805,83 @@ const editions = [
   {name:'Origem Perdida', code:'SS10', year:'2022', products:5},
 ];
 
+// Product images: cards use pokemontcg.io API; products use SVG illustrations embedded as data URIs
+// SVG product illustrations for each product type
+function makeSVG(type, setColor, setName) {
+  const c = setColor || '#0D1B2A';
+  const n = setName || '';
+  const svgs = {
+    'pack': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280"><defs><linearGradient id="pg${c.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c}"/><stop offset="100%" stop-color="${c}88"/></linearGradient></defs><rect x="20" y="10" width="160" height="260" rx="12" fill="url(#pg${c.slice(1)})"/><rect x="30" y="20" width="140" height="240" rx="8" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.2"/><rect x="35" y="30" width="130" height="80" rx="6" fill="#fff" opacity="0.1"/><text x="100" y="145" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#fff" opacity="0.9" letter-spacing="3">POKÉMON</text><text x="100" y="162" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="#fff" opacity="0.5" letter-spacing="2">TRADING CARD GAME</text><line x1="50" y1="175" x2="150" y2="175" stroke="#fff" stroke-width="0.5" opacity="0.2"/><text x="100" y="195" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#fff" opacity="0.7" letter-spacing="1">${n}</text><circle cx="100" cy="230" r="18" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.15"/><line x1="82" y1="230" x2="93" y2="230" stroke="#fff" stroke-width="0.8" opacity="0.15"/><line x1="107" y1="230" x2="118" y2="230" stroke="#fff" stroke-width="0.8" opacity="0.15"/><circle cx="100" cy="230" r="4" fill="#fff" opacity="0.15"/><text x="100" y="262" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" fill="#fff" opacity="0.3" letter-spacing="2">BOOSTER PACK</text></svg>`,
+    'box': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 220"><defs><linearGradient id="bg${c.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c}"/><stop offset="50%" stop-color="${c}dd"/><stop offset="100%" stop-color="${c}aa"/></linearGradient></defs><path d="M30 60L140 30L250 60V170L140 195L30 170Z" fill="url(#bg${c.slice(1)})"/><path d="M140 30V195" stroke="#fff" stroke-width="0.6" opacity="0.1"/><path d="M30 60L140 85L250 60" stroke="#fff" stroke-width="0.6" opacity="0.1"/><path d="M140 85V195" stroke="#fff" stroke-width="0.3" opacity="0.08"/><rect x="55" y="90" width="70" height="50" rx="3" fill="#fff" opacity="0.08"/><text x="90" y="110" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" font-weight="700" fill="#fff" opacity="0.6" letter-spacing="2">POKÉMON</text><text x="90" y="122" text-anchor="middle" font-family="Inter,sans-serif" font-size="6" fill="#fff" opacity="0.4" letter-spacing="1">${n}</text><text x="90" y="135" text-anchor="middle" font-family="Inter,sans-serif" font-size="5" fill="#fff" opacity="0.3">36 BOOSTER PACKS</text><text x="140" y="210" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" fill="#999" letter-spacing="2">BOOSTER BOX</text></svg>`,
+    'etb': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260"><defs><linearGradient id="eg${c.slice(1)}" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="${c}"/><stop offset="100%" stop-color="${c}cc"/></linearGradient></defs><rect x="30" y="20" width="180" height="210" rx="10" fill="url(#eg${c.slice(1)})"/><rect x="40" y="30" width="160" height="190" rx="6" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.15"/><rect x="50" y="40" width="140" height="60" rx="4" fill="#fff" opacity="0.08"/><text x="120" y="65" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#fff" opacity="0.8" letter-spacing="3">POKÉMON TCG</text><text x="120" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" fill="#fff" opacity="0.5" letter-spacing="1">${n}</text><line x1="60" y1="115" x2="180" y2="115" stroke="#fff" stroke-width="0.5" opacity="0.12"/><text x="120" y="135" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#fff" opacity="0.7" letter-spacing="4">ELITE</text><text x="120" y="152" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#fff" opacity="0.7" letter-spacing="4">TRAINER BOX</text><circle cx="120" cy="185" r="15" fill="none" stroke="#fff" stroke-width="1" opacity="0.12"/><line x1="105" y1="185" x2="113" y2="185" stroke="#fff" stroke-width="0.6" opacity="0.12"/><line x1="127" y1="185" x2="135" y2="185" stroke="#fff" stroke-width="0.6" opacity="0.12"/><circle cx="120" cy="185" r="3.5" fill="#fff" opacity="0.12"/><text x="120" y="245" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" fill="#999" letter-spacing="2">ETB</text></svg>`,
+    'bundle': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200"><defs><linearGradient id="bu${c.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c}"/><stop offset="100%" stop-color="${c}bb"/></linearGradient></defs><rect x="25" y="30" width="190" height="140" rx="10" fill="url(#bu${c.slice(1)})"/><rect x="35" y="40" width="170" height="120" rx="6" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.15"/><rect x="50" y="55" width="30" height="50" rx="3" fill="#fff" opacity="0.08"/><rect x="65" y="55" width="30" height="50" rx="3" fill="#fff" opacity="0.06"/><rect x="80" y="55" width="30" height="50" rx="3" fill="#fff" opacity="0.05"/><text x="120" y="125" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" font-weight="600" fill="#fff" opacity="0.7" letter-spacing="2">${n}</text><text x="120" y="140" text-anchor="middle" font-family="Inter,sans-serif" font-size="6" fill="#fff" opacity="0.4" letter-spacing="1">6 BOOSTER PACKS</text><text x="120" y="188" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" fill="#999" letter-spacing="2">BOOSTER BUNDLE</text></svg>`,
+    'accessory': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="30" y="30" width="140" height="140" rx="16" fill="#E8EDF2"/><rect x="42" y="42" width="116" height="116" rx="10" fill="none" stroke="#0D1B2A" stroke-width="1" opacity="0.12"/><circle cx="100" cy="95" r="28" fill="none" stroke="#0D1B2A" stroke-width="1.5" opacity="0.15"/><line x1="72" y1="95" x2="85" y2="95" stroke="#0D1B2A" stroke-width="1" opacity="0.12"/><line x1="115" y1="95" x2="128" y2="95" stroke="#0D1B2A" stroke-width="1" opacity="0.12"/><circle cx="100" cy="95" r="6" fill="#0D1B2A" opacity="0.08"/><text x="100" y="145" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="#999" opacity="0.6" letter-spacing="2">${n||'ACESSÓRIO'}</text></svg>`
+  };
+  return svgs[type] || svgs['accessory'];
+}
+
+// Color map for editions
+const editionColors = {
+  'Jornada Juntos':'#1B5E20','Destinos Brilhantes':'#4A148C','Fenda Paradoxal':'#B71C1C',
+  'Forças Temporais':'#0D47A1','Chamas Obsidianas':'#E65100','Máscara Crepuscular':'#4E342E',
+  'Evoluções em Paldea':'#00695C','Obsidiana 151':'#C62828','Escarlate e Violeta':'#6A1B9A',
+  'Reinado Arrepiante':'#263238','Estrelas Radiantes':'#F9A825','Origem Perdida':'#1A237E'
+};
+
+// Real product images sourced from Amazon Brazil (m.media-amazon.com) and Pokemon.com
+// Packs: Blister Unitário EV9 Amigos de Jornada
+// Boxes: Box Display EV9 Amigos de Jornada
+// ETBs: Treinador Avançado (various SV editions)
+// Bundles: Blister Triplo EV9
+// Accessories: Ultra Pro official products
+const IMG = {
+  pack:   'https://m.media-amazon.com/images/I/81ycmGkQKqL._AC_SL500_.jpg',
+  box:    'https://m.media-amazon.com/images/I/8146zREgeSL._AC_SL500_.jpg',
+  bundle: 'https://m.media-amazon.com/images/I/816MhcNamDL._AC_SL500_.jpg',
+  etb1:   'https://m.media-amazon.com/images/I/61aNYZV1fZL._AC_SL500_.jpg',
+  etb2:   'https://m.media-amazon.com/images/I/81tBxS2lYWL._AC_SL500_.jpg',
+  etb3:   'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2025/sv09-elite-trainer-box/sv09-elite-trainer-box-169-en.png',
+  sleeves:'https://m.media-amazon.com/images/I/51Bka+U3wyL._AC_SL500_.jpg',
+  deckbox:'https://m.media-amazon.com/images/I/71eHQEpM9XL._AC_SL500_.jpg',
+  playmat:'https://m.media-amazon.com/images/I/71fqj06OKaL._AC_SL500_.jpg',
+};
+
 const products = [
   // BOOSTER PACKS
-  {id:1, name:'Booster Pack — Jornada Juntos', edition:'Jornada Juntos', category:'booster-packs', price:24.90, badge:'new', stock:'in', desc:'Pacote individual contendo 10 cartas da expansão Jornada Juntos (SV09). Cada pack pode conter cartas de diferentes raridades, incluindo chances de Illustration Rare e Special Art Rare.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'10 cartas por pack',Idioma:'Português',Origem:'Oficial — The Pokémon Company'}},
-  {id:2, name:'Booster Pack — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'booster-packs', price:22.90, stock:'in', desc:'Pack individual com 10 cartas da expansão Destinos Brilhantes.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
-  {id:3, name:'Booster Pack — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'booster-packs', price:19.90, stock:'in', desc:'Pack individual da expansão Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
-  {id:4, name:'Booster Pack — Forças Temporais', edition:'Forças Temporais', category:'booster-packs', price:18.90, badge:'sale', oldPrice:22.90, stock:'in', desc:'Pack individual da expansão Forças Temporais com desconto.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
-  {id:5, name:'Booster Pack — Obsidiana 151', edition:'Obsidiana 151', category:'booster-packs', price:39.90, badge:'hot', stock:'low', desc:'Pack da aclamada expansão Obsidiana 151. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 cartas por pack',Idioma:'Português/Japonês'}},
-  {id:6, name:'Booster Pack — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'booster-packs', price:21.90, stock:'in', desc:'Pack individual da expansão Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 cartas por pack'}},
+  {id:1, name:'Booster Pack — Jornada Juntos', edition:'Jornada Juntos', category:'booster-packs', ptype:'pack', img:IMG.pack, price:24.90, badge:'new', stock:'in', desc:'Pacote individual contendo 10 cartas da expansão Jornada Juntos (SV09). Cada pack pode conter cartas de diferentes raridades, incluindo chances de Illustration Rare e Special Art Rare.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'10 cartas por pack',Idioma:'Português',Origem:'Oficial — The Pokémon Company'}},
+  {id:2, name:'Booster Pack — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'booster-packs', ptype:'pack', img:IMG.pack, price:22.90, stock:'in', desc:'Pack individual com 10 cartas da expansão Destinos Brilhantes.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
+  {id:3, name:'Booster Pack — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'booster-packs', ptype:'pack', img:IMG.pack, price:19.90, stock:'in', desc:'Pack individual da expansão Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
+  {id:4, name:'Booster Pack — Forças Temporais', edition:'Forças Temporais', category:'booster-packs', ptype:'pack', img:IMG.pack, price:18.90, badge:'sale', oldPrice:22.90, stock:'in', desc:'Pack individual da expansão Forças Temporais com desconto.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
+  {id:5, name:'Booster Pack — Obsidiana 151', edition:'Obsidiana 151', category:'booster-packs', ptype:'pack', img:IMG.pack, price:39.90, badge:'hot', stock:'low', desc:'Pack da aclamada expansão Obsidiana 151. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 cartas por pack',Idioma:'Português/Japonês'}},
+  {id:6, name:'Booster Pack — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'booster-packs', ptype:'pack', img:IMG.pack, price:21.90, stock:'in', desc:'Pack individual da expansão Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 cartas por pack'}},
 
   // BOXES & ETBs
-  {id:10, name:'Booster Box — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', price:849.90, badge:'new', stock:'in', desc:'Caixa lacrada contendo 36 Booster Packs da expansão Jornada Juntos. Ideal para colecionadores e jogadores que querem maximizar suas chances de pulls raros.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'36 Booster Packs',Idioma:'Português',Total:'360 cartas'}},
-  {id:11, name:'ETB — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'boxes', price:349.90, stock:'in', desc:'Elite Trainer Box com 10 boosters, sleeves, contadores de dano, moeda e mais.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 Booster Packs + acessórios',Idioma:'Português'}},
-  {id:12, name:'Booster Box — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'boxes', price:749.90, stock:'in', desc:'Caixa lacrada com 36 packs de Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'36 Booster Packs'}},
-  {id:13, name:'ETB — Obsidiana 151', edition:'Obsidiana 151', category:'boxes', price:599.90, badge:'hot', stock:'low', desc:'Elite Trainer Box da coleção Obsidiana 151. Estoque limitado.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 Booster Packs + acessórios'}},
-  {id:14, name:'Booster Box — Forças Temporais', edition:'Forças Temporais', category:'boxes', price:699.90, badge:'sale', oldPrice:799.90, stock:'in', desc:'Box lacrado com 36 packs. Promoção por tempo limitado.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'36 Booster Packs'}},
-  {id:15, name:'Booster Bundle — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', price:149.90, badge:'new', stock:'in', desc:'Bundle com 6 Booster Packs de Jornada Juntos.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'6 Booster Packs'}},
-  {id:16, name:'ETB — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'boxes', price:299.90, stock:'in', desc:'Elite Trainer Box da coleção Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 Booster Packs + acessórios'}},
+  {id:10, name:'Booster Box — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', ptype:'box', img:IMG.box, price:849.90, badge:'new', stock:'in', desc:'Caixa lacrada contendo 36 Booster Packs da expansão Jornada Juntos. Ideal para colecionadores e jogadores que querem maximizar suas chances de pulls raros.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'36 Booster Packs',Idioma:'Português',Total:'360 cartas'}},
+  {id:11, name:'ETB — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'boxes', ptype:'etb', img:IMG.etb1, price:349.90, stock:'in', desc:'Elite Trainer Box com 10 boosters, sleeves, contadores de dano, moeda e mais.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 Booster Packs + acessórios',Idioma:'Português'}},
+  {id:12, name:'Booster Box — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'boxes', ptype:'box', img:IMG.box, price:749.90, stock:'in', desc:'Caixa lacrada com 36 packs de Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'36 Booster Packs'}},
+  {id:13, name:'ETB — Obsidiana 151', edition:'Obsidiana 151', category:'boxes', ptype:'etb', img:IMG.etb2, price:599.90, badge:'hot', stock:'low', desc:'Elite Trainer Box da coleção Obsidiana 151. Estoque limitado.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 Booster Packs + acessórios'}},
+  {id:14, name:'Booster Box — Forças Temporais', edition:'Forças Temporais', category:'boxes', ptype:'box', img:IMG.box, price:699.90, badge:'sale', oldPrice:799.90, stock:'in', desc:'Box lacrado com 36 packs. Promoção por tempo limitado.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'36 Booster Packs'}},
+  {id:15, name:'Booster Bundle — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', ptype:'bundle', img:IMG.bundle, price:149.90, badge:'new', stock:'in', desc:'Bundle com 6 Booster Packs de Jornada Juntos.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'6 Booster Packs'}},
+  {id:16, name:'ETB — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'boxes', ptype:'etb', img:IMG.etb3, price:299.90, stock:'in', desc:'Elite Trainer Box da coleção Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 Booster Packs + acessórios'}},
 
-  // SINGLES
-  {id:20, name:'Charizard ex SAR', edition:'Obsidiana 151', category:'singles', price:489.90, badge:'hot', stock:'in', desc:'Carta individual Charizard ex Special Art Rare da coleção Obsidiana 151. Condição Near Mint (NM).', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)',Número:'#201/165'}},
-  {id:21, name:'Pikachu ex IR', edition:'Jornada Juntos', category:'singles', price:129.90, badge:'new', stock:'in', desc:'Pikachu ex Illustration Rare da nova expansão.', specs:{Edição:'Jornada Juntos (SV09)',Raridade:'Illustration Rare (IR)',Condição:'Near Mint (NM)'}},
-  {id:22, name:'Mewtwo ex SAR', edition:'Obsidiana 151', category:'singles', price:349.90, stock:'in', desc:'Mewtwo ex Special Art Rare. Condição NM.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)'}},
-  {id:23, name:'Gardevoir ex UR', edition:'Destinos Brilhantes', category:'singles', price:89.90, stock:'in', desc:'Gardevoir ex Ultra Rare. Condição NM.', specs:{Edição:'Destinos Brilhantes (SV08)',Raridade:'Ultra Rare (UR)',Condição:'Near Mint (NM)'}},
-  {id:24, name:'Mew ex HR', edition:'Obsidiana 151', category:'singles', price:199.90, stock:'low', desc:'Mew ex Hyper Rare gold. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Hyper Rare (HR)',Condição:'Near Mint (NM)'}},
+  // SINGLES — card images from Pokemon TCG API
+  {id:20, name:'Charizard ex SAR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:489.90, badge:'hot', stock:'in', img:'https://images.pokemontcg.io/sv3pt5/183.png', desc:'Carta individual Charizard ex Special Art Rare da coleção Obsidiana 151. Condição Near Mint (NM).', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)',Número:'#183/165'}},
+  {id:21, name:'Pikachu ex IR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:129.90, badge:'new', stock:'in', img:'https://images.pokemontcg.io/sv3pt5/172.png', desc:'Pikachu ex Illustration Rare.', specs:{Edição:'Obsidiana 151',Raridade:'Illustration Rare (IR)',Condição:'Near Mint (NM)'}},
+  {id:22, name:'Mewtwo ex SAR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:349.90, stock:'in', img:'https://images.pokemontcg.io/sv3pt5/182.png', desc:'Mewtwo ex Special Art Rare. Condição NM.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)'}},
+  {id:23, name:'Gardevoir ex UR', edition:'Destinos Brilhantes', category:'singles', ptype:'card', price:89.90, stock:'in', img:'https://images.pokemontcg.io/sv4pt5/86.png', desc:'Gardevoir ex Ultra Rare. Condição NM.', specs:{Edição:'Destinos Brilhantes',Raridade:'Ultra Rare (UR)',Condição:'Near Mint (NM)'}},
+  {id:24, name:'Mew ex HR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:199.90, stock:'low', img:'https://images.pokemontcg.io/sv3pt5/151.png', desc:'Mew ex Hyper Rare gold. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Hyper Rare (HR)',Condição:'Near Mint (NM)'}},
 
   // GRADED
-  {id:30, name:'Charizard VMAX PSA 10', edition:'Reinado Arrepiante', category:'graded', price:2499.90, badge:'graded', stock:'in', desc:'Charizard VMAX #74 graduada pela PSA com nota 10 (Gem Mint). Acompanha case original PSA e certificado.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'PSA 10 — Gem Mint',Certificado:'#87456321',Encapsulada:'Sim — case PSA'}},
-  {id:31, name:'Pikachu V FA PSA 9', edition:'Estrelas Radiantes', category:'graded', price:599.90, badge:'graded', stock:'in', desc:'Pikachu V Full Art graduada PSA 9.', specs:{Edição:'Estrelas Radiantes (SS11)',Nota:'PSA 9 — Mint',Encapsulada:'Sim — case PSA'}},
-  {id:32, name:'Umbreon VMAX Alt Art BGS 9.5', edition:'Reinado Arrepiante', category:'graded', price:3999.90, badge:'graded', stock:'in', desc:'Uma das cartas mais procuradas da era moderna, graduada BGS 9.5.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'BGS 9.5 — Gem Mint',Encapsulada:'Sim — case BGS'}},
+  {id:30, name:'Charizard VMAX PSA 10', edition:'Reinado Arrepiante', category:'graded', ptype:'card', price:2499.90, badge:'graded', stock:'in', img:'https://images.pokemontcg.io/swsh7/74.png', desc:'Charizard VMAX #74 graduada pela PSA com nota 10 (Gem Mint). Acompanha case original PSA e certificado.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'PSA 10 — Gem Mint',Certificado:'#87456321',Encapsulada:'Sim — case PSA'}},
+  {id:31, name:'Pikachu V FA PSA 9', edition:'Estrelas Radiantes', category:'graded', ptype:'card', price:599.90, badge:'graded', stock:'in', img:'https://images.pokemontcg.io/swsh9/157.png', desc:'Pikachu V Full Art graduada PSA 9.', specs:{Edição:'Estrelas Radiantes (SS11)',Nota:'PSA 9 — Mint',Encapsulada:'Sim — case PSA'}},
+  {id:32, name:'Umbreon VMAX Alt Art BGS 9.5', edition:'Reinado Arrepiante', category:'graded', ptype:'card', price:3999.90, badge:'graded', stock:'in', img:'https://images.pokemontcg.io/swsh7/95.png', desc:'Uma das cartas mais procuradas da era moderna, graduada BGS 9.5.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'BGS 9.5 — Gem Mint',Encapsulada:'Sim — case BGS'}},
 
   // ACCESSORIES
-  {id:40, name:'Sleeves Ultra Pro Pokéball', edition:'Acessório', category:'accessories', price:29.90, stock:'in', desc:'Pacote com 65 sleeves oficiais Ultra Pro com estampa de Pokéball.', specs:{Quantidade:'65 unidades',Material:'Polipropileno',Tamanho:'Standard (66x91mm)'}},
-  {id:41, name:'Deck Box Ultra Pro — Pikachu', edition:'Acessório', category:'accessories', price:49.90, stock:'in', desc:'Deck box oficial com capacidade para 80+ cartas com sleeves.', specs:{Capacidade:'80+ cartas',Material:'Plástico rígido',Fechamento:'Magnético'}},
-  {id:42, name:'Playmat Oficial — Charizard', edition:'Acessório', category:'accessories', price:149.90, stock:'low', desc:'Playmat oficial de jogo com estampa de Charizard. Superfície premium.', specs:{Tamanho:'60x35cm',Material:'Borracha + tecido',Superfície:'Anti-deslizante'}},
-  {id:43, name:'Top Loader Ultra Pro (25un)', edition:'Acessório', category:'accessories', price:19.90, stock:'in', desc:'Pack com 25 top loaders rígidos para proteção de cartas.', specs:{Quantidade:'25 unidades',Material:'PVC rígido',Tamanho:'3x4"'}},
-  {id:44, name:'Álbum 9 Bolsos — 360 Cards', edition:'Acessório', category:'accessories', price:89.90, stock:'in', desc:'Álbum premium com páginas de 9 bolsos. Comporta 360 cartas.', specs:{Capacidade:'360 cartas',Páginas:'20 (9 bolsos cada)',Material:'Couro sintético'}},
+  {id:40, name:'Sleeves Ultra Pro Pokéball', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.sleeves, price:29.90, stock:'in', desc:'Pacote com 65 sleeves oficiais Ultra Pro com estampa de Pokéball.', specs:{Quantidade:'65 unidades',Material:'Polipropileno',Tamanho:'Standard (66x91mm)'}},
+  {id:41, name:'Deck Box Ultra Pro — Pikachu', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.deckbox, price:49.90, stock:'in', desc:'Deck box oficial com capacidade para 80+ cartas com sleeves.', specs:{Capacidade:'80+ cartas',Material:'Plástico rígido',Fechamento:'Magnético'}},
+  {id:42, name:'Playmat Oficial — Charizard', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.playmat, price:149.90, stock:'low', desc:'Playmat oficial de jogo com estampa de Charizard. Superfície premium.', specs:{Tamanho:'60x35cm',Material:'Borracha + tecido',Superfície:'Anti-deslizante'}},
+  {id:43, name:'Top Loader Ultra Pro (25un)', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.sleeves, price:19.90, stock:'in', desc:'Pack com 25 top loaders rígidos para proteção de cartas.', specs:{Quantidade:'25 unidades',Material:'PVC rígido',Tamanho:'3x4"'}},
+  {id:44, name:'Álbum 9 Bolsos — 360 Cards', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.deckbox, price:89.90, stock:'in', desc:'Álbum premium com páginas de 9 bolsos. Comporta 360 cartas.', specs:{Capacidade:'360 cartas',Páginas:'20 (9 bolsos cada)',Material:'Couro sintético'}},
 ];
 
 const categoryLabels = {
@@ -809,7 +889,26 @@ const categoryLabels = {
   'graded':'Cartas Graduadas','accessories':'Acessórios','all':'Todos os Produtos'
 };
 
+// ===== PRODUCT TYPE INDICATOR (shown as overlay label on product cards) =====
+const productTypeLabels = {
+  'booster-packs': 'BOOSTER PACK',
+  'boxes': 'BOX / ETB',
+  'singles': 'SINGLE CARD',
+  'graded': 'GRADED CARD',
+  'accessories': 'ACCESSORY'
+};
+
 // ===== RENDER FUNCTIONS =====
+function getProductImage(p){
+  if(p.img){
+    const fallback = makeSVG(p.ptype || 'accessory', editionColors[p.edition] || '#0D1B2A', p.edition || '');
+    const escapedFallback = fallback.replace(/'/g,"\\'").replace(/\n/g,'');
+    return `<img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'product-placeholder\\'>${escapedFallback}</div>';">`;
+  }
+  const svg = makeSVG(p.ptype || 'accessory', editionColors[p.edition] || '#0D1B2A', p.edition || '');
+  return `<div class="product-placeholder">${svg}</div>`;
+}
+
 function renderProductCard(p){
   const badgeHTML = p.badge ? `<span class="badge badge-${p.badge}">${{new:'Novo',sale:'Oferta',hot:'Destaque',graded:'Graduada'}[p.badge]}</span>` : '';
   const oldPriceHTML = p.oldPrice ? `<span class="price-old product-price-old">R$ ${p.oldPrice.toFixed(2).replace('.',',')}</span> ` : '';
@@ -819,10 +918,7 @@ function renderProductCard(p){
     <div class="product-card" onclick="navigate('detail',${p.id})">
       <div class="product-img">
         ${badgeHTML}
-        <div class="product-placeholder">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <span>Imagem</span>
-        </div>
+        ${getProductImage(p)}
       </div>
       <div class="product-info">
         <div class="product-brand">Pokémon TCG</div>
@@ -926,6 +1022,17 @@ function showDetail(productId){
   document.getElementById('detailBackLink').textContent = backCat;
   document.getElementById('detailBackLink').onclick = function(e){e.preventDefault();navigate(p.category);};
 
+  // Update detail image
+  const detailImgEl = document.querySelector('.detail-image');
+  if(p.img){
+    const fallback = makeSVG(p.ptype || 'accessory', editionColors[p.edition] || '#0D1B2A', p.edition || '');
+    const escapedFallback = fallback.replace(/'/g,"\\'").replace(/\n/g,'');
+    detailImgEl.innerHTML = `<img src="${p.img}" alt="${p.name}" style="padding:20px;" onerror="this.parentElement.innerHTML='<div class=\\'product-placeholder\\'>${escapedFallback}</div>';">`;
+  } else {
+    const svg = makeSVG(p.ptype || 'accessory', editionColors[p.edition] || '#0D1B2A', p.edition || '');
+    detailImgEl.innerHTML = `<div class="product-placeholder" style="width:80%;height:80%;display:flex;align-items:center;justify-content:center;">${svg}</div>`;
+  }
+
   const oldPriceHTML = p.oldPrice ? `<span class="price-old" style="font-size:18px;">R$ ${p.oldPrice.toFixed(2).replace('.',',')}</span>` : '';
   const badgeHTML = p.badge ? `<span class="badge badge-${p.badge}" style="margin-bottom:12px;">${{new:'Novo',sale:'Oferta',hot:'Destaque',graded:'Graduada'}[p.badge]}</span><br>` : '';
   const specsHTML = p.specs ? Object.entries(p.specs).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('') : '';
@@ -996,6 +1103,21 @@ function init(){
 
   // Home editions
   document.getElementById('editionsGrid').innerHTML = editions.slice(0,6).map(e=>renderEditionCard(e,false)).join('');
+
+  // Hero product visuals
+  const jjColor = editionColors['Jornada Juntos'];
+  const heroETB = document.getElementById('heroETB');
+  const heroBox = document.getElementById('heroBox');
+  const heroPack = document.getElementById('heroPack');
+  if(heroETB) heroETB.innerHTML = makeSVG('etb', jjColor, 'Jornada Juntos');
+  if(heroBox) heroBox.innerHTML = makeSVG('box', jjColor, 'Jornada Juntos');
+  if(heroPack) heroPack.innerHTML = makeSVG('pack', jjColor, 'Jornada Juntos');
+
+  // Cart item images (box and etb)
+  const c1 = document.getElementById('cartItem1Img');
+  const c2 = document.getElementById('cartItem2Img');
+  if(c1) c1.innerHTML = `<img src="${IMG.box}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
+  if(c2) c2.innerHTML = `<img src="${IMG.etb1}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
 }
 init();
 </script>
