@@ -795,45 +795,38 @@ const editionColors = {
 // Official product images from Pokemon.com CDN (verified working)
 const IMG = {
   // Ascended Heroes (ME2PT5) — Mega Evolution Series 2026
-  ahBlister: 'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-tech-sticker-collection/me2pt5-tech-sticker-collection-169-en.png',
-  ahETB:     'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-elite-trainer-box/me2pt5-elite-trainer-box-169-en.png',
+  ahETB:    'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-elite-trainer-box/me2pt5-elite-trainer-box-169-en.png',
+  ahTin:    'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-mini-tins/me2pt5-mini-tins-169.png',
+  ahBundle: 'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-booster-bundle/me2pt5-booster-bundle-169-en.png',
   // Perfect Order (ME03) — Mega Evolution Series 2026
-  poBlister: 'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/me_series/me03/me03-booster-packs-169-en.png',
-  poETB:     'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me03-elite-trainer-box/me03-elite-trainer-box-169-en.png',
-  // Single cards — pokemontcg.io API images
-  vanGogh:   'https://images.pokemontcg.io/svp/85.png',
-  charizard: 'https://images.pokemontcg.io/base1/4.png',
+  poBlister:'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/me_series/me03/me03-booster-packs-169-en.png',
+  poETB:    'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me03-elite-trainer-box/me03-elite-trainer-box-169-en.png',
 };
 
 const products = [
-  // ASCENDED HEROES
-  {id:1, name:'Blister Triplo — Ascended Heroes', edition:'Ascended Heroes', category:'booster-packs', ptype:'pack', img:IMG.ahBlister, price:149.90, badge:'new', stock:'in',
-   desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Ascended Heroes (ME2PT5). Contém promo exclusiva e moeda metálica colecionável. Apresenta Mega Dragonite ex e mais de 290 cartas incluindo Mega Evoluções inéditas.',
-   specs:{Edição:'Ascended Heroes (ME2PT5)',Conteúdo:'3 Booster Packs + promo + moeda',Idioma:'Inglês',Lançamento:'2026'}},
-  {id:2, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'etb', img:IMG.ahETB, price:549.90, badge:'new', stock:'in',
+  // ASCENDED HEROES — Mega Evolution Series 2026
+  {id:1, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'etb', img:IMG.ahETB, price:409.49, badge:'new', stock:'in', qty:10,
    desc:'Elite Trainer Box da expansão Mega Evolution — Ascended Heroes. Inclui 9 Booster Packs, promo full art de N\'s Zekrom, 65 sleeves exclusivas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
-   specs:{Edição:'Ascended Heroes (ME2PT5)',Conteúdo:'9 Booster Packs + acessórios',Promo:"N's Zekrom Full Art",Sleeves:'65 un. — design Mega Dragonite ex',Idioma:'Inglês'}},
+   specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'9 Booster Packs + acessórios',Promo:"N's Zekrom Full Art",Sleeves:'65 un. — design Mega Dragonite ex',Idioma:'Inglês',Lançamento:'Fev 2026'}},
+  {id:2, name:'Mini Tin — Ascended Heroes', edition:'Ascended Heroes', category:'accessories', ptype:'pack', img:IMG.ahTin, price:81.89, badge:'new', stock:'in', qty:10,
+   desc:'Mini Tin colecionável da expansão Mega Evolution — Ascended Heroes. Inclui 2 Booster Packs e uma moeda metálica exclusiva. Coleção completa combina as artes das 5 latas.',
+   specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'2 Booster Packs + moeda metálica',Idioma:'Inglês',Formato:'Lata colecionável',Lançamento:'Fev 2026'}},
+  {id:3, name:'Booster Bundle — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'pack', img:IMG.ahBundle, price:209.99, stock:'in', qty:25,
+   desc:'Booster Bundle com 6 Booster Packs da expansão Mega Evolution — Ascended Heroes. Melhor custo-benefício para maximizar pulls raros e acelerar a coleção.',
+   specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'6 Booster Packs',Idioma:'Inglês',Formato:'Bundle lacrado',Lançamento:'Fev 2026'}},
 
-  // PERFECT ORDER
-  {id:3, name:'Blister Triplo — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'pack', img:IMG.poBlister, price:149.90, stock:'in',
-   desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Perfect Order (ME03). Inclui promo foil Chikorita e moeda metálica colecionável. Baseada em Pokémon Legends: Z-A com Mega Zygarde ex como mascote.',
-   specs:{Edição:'Perfect Order (ME03)',Conteúdo:'3 Booster Packs + promo + moeda',Promo:'Chikorita foil (MEP069)',Idioma:'Inglês',Lançamento:'Mar 2026'}},
-  {id:4, name:'ETB — Perfect Order', edition:'Perfect Order', category:'boxes', ptype:'etb', img:IMG.poETB, price:549.90, stock:'in',
-   desc:'Elite Trainer Box da expansão Mega Evolution — Perfect Order. Contém 9 Booster Packs, sleeves temáticas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa de Mega Zygarde ex.',
-   specs:{Edição:'Perfect Order (ME03)',Conteúdo:'9 Booster Packs + acessórios',Mascote:'Mega Zygarde ex',Sleeves:'65 un. — design exclusivo',Idioma:'Inglês'}},
-
-  // SINGLES
-  {id:5, name:'Pikachu Van Gogh PSA 10', edition:'Pokémon × Van Gogh Museum', category:'graded', ptype:'card', img:IMG.vanGogh, price:1899.90, badge:'graded', stock:'in',
-   desc:'Pikachu with Grey Felt Hat — carta promo da colaboração exclusiva Pokémon × Van Gogh Museum (2023), inspirada no autorretrato "Self-Portrait with Grey Felt Hat" de Van Gogh. Graduada PSA 10 (Gem Mint). Card #SVP-085.',
-   specs:{Edição:'Van Gogh Museum Promo (SVP)',Número:'#085',Condição:'PSA 10 — Gem Mint',Encapsulada:'Sim — case PSA original',Ano:'2023'}},
-  {id:6, name:'Charizard 1ª Edição — Raw', edition:'Base Set 1ª Edição', category:'singles', ptype:'card', img:IMG.charizard, price:2499.90, stock:'in',
-   desc:'Charizard Holo Rare #4/102 da Base Set Original com stamp de 1ª Edição (1999). Condição Near Mint (NM) avaliada visualmente. Uma das cartas mais icônicas e valiosas da história do Pokémon TCG. Não graduada.',
-   specs:{Edição:'Base Set 1ª Edição (1999)',Número:'#4/102',Raridade:'Holo Rare',Condição:'Near Mint (NM) — Não Graduada',Stamp:'1st Edition'}},
+  // PERFECT ORDER — Mega Evolution Series 2026
+  {id:4, name:'3-Pack Blister — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'pack', img:IMG.poBlister, price:104.99, stock:'in', qty:24,
+   desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Perfect Order. Inclui promo foil Chikorita e moeda metálica colecionável. Mega Zygarde ex lidera a expansão baseada em Pokémon Legends: Z-A.',
+   specs:{Edição:'Mega Evolution — Perfect Order',Conteúdo:'3 Booster Packs + promo + moeda',Promo:'Chikorita foil (MEP069)',Idioma:'Inglês',Lançamento:'Mar 2026'}},
+  {id:5, name:'ETB — Perfect Order', edition:'Perfect Order', category:'boxes', ptype:'etb', img:IMG.poETB, price:409.49, stock:'in', qty:10,
+   desc:'Elite Trainer Box da expansão Mega Evolution — Perfect Order. Contém 9 Booster Packs, promo Tyrunt Full Art, 65 sleeves temáticas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
+   specs:{Edição:'Mega Evolution — Perfect Order',Conteúdo:'9 Booster Packs + acessórios',Promo:'Tyrunt Full Art',Mascote:'Mega Zygarde ex',Sleeves:'65 un. — design exclusivo',Idioma:'Inglês',Lançamento:'Mar 2026'}},
 ];
 
 const categoryLabels = {
-  'booster-packs':'Booster Packs','boxes':'Boxes & ETBs','singles':'Cartas Individuais',
-  'graded':'Cartas Graduadas','accessories':'Acessórios','all':'Todos os Produtos'
+  'booster-packs':'Booster Packs','boxes':'Boxes & ETBs','accessories':'Acessórios',
+  'singles':'Cartas Individuais','graded':'Cartas Graduadas','all':'Todos os Produtos'
 };
 
 // ===== PRODUCT TYPE INDICATOR (shown as overlay label on product cards) =====
@@ -862,8 +855,9 @@ function getProductImage(p){
 function renderProductCard(p){
   const badgeHTML = p.badge ? `<span class="badge badge-${p.badge}">${{new:'Novo',sale:'Oferta',hot:'Destaque',graded:'Graduada'}[p.badge]}</span>` : '';
   const oldPriceHTML = p.oldPrice ? `<span class="price-old product-price-old">R$ ${p.oldPrice.toFixed(2).replace('.',',')}</span> ` : '';
-  const stockClass = p.stock==='low'?'low':p.stock==='out'?'out':'';
-  const stockText = p.stock==='in'?'Em estoque':p.stock==='low'?'Últimas unidades':'Esgotado';
+  const qty = p.qty != null ? p.qty : (p.stock==='out' ? 0 : p.stock==='low' ? 3 : 99);
+  const stockClass = qty===0?'out':qty<=5?'low':'';
+  const stockText = qty===0?'Esgotado':qty<=5?`Últimas ${qty} unidades`:'Em estoque';
   return `
     <div class="product-card" onclick="navigate('detail',${p.id})">
       <div class="product-img">
@@ -920,7 +914,7 @@ function navigate(page, param){
   }
   else if(page==='edition'){
     const filtered = products.filter(p=>p.edition===param);
-    showListing(param, `Edição: ${param}`, filtered, ['Booster Packs','Boxes','Singles']);
+    showListing(param, `Edição: ${param}`, filtered, ['Booster Packs','Boxes','Acessórios']);
   }
   else if(page==='booster-packs'){
     showListing('Blisters','Blisters', products.filter(p=>p.category==='booster-packs'), ['Ascended Heroes','Perfect Order']);
@@ -935,10 +929,10 @@ function navigate(page, param){
     showListing('Cartas Graduadas','Cartas Graduadas', products.filter(p=>p.category==='graded'), ['PSA 10']);
   }
   else if(page==='accessories'){
-    showListing('Acessórios','Acessórios', products.filter(p=>p.category==='accessories'), []);
+    showListing('Acessórios','Acessórios', products.filter(p=>p.category==='accessories'), ['Ascended Heroes']);
   }
   else if(page==='all'){
-    showListing('Todos os Produtos','Todos os Produtos', products, ['Blisters','ETBs','Singles','Graduadas']);
+    showListing('Todos os Produtos','Todos os Produtos', products, ['Blisters','ETBs','Acessórios']);
   }
   else if(page==='detail'){
     showDetail(param);
@@ -1144,10 +1138,10 @@ function init(){
   if(heroPack){
     heroPack.innerHTML = '';
     const img = document.createElement('img');
-    img.src = IMG.ahBlister;
-    img.alt = 'Blister Ascended Heroes';
+    img.src = IMG.poBlister;
+    img.alt = '3-Pack Blister Perfect Order';
     img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
-    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('pack', ahColor, 'Ascended Heroes'); };
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('pack', editionColors['Perfect Order'], 'Perfect Order'); };
     heroPack.appendChild(img);
   }
 }
