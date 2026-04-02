@@ -71,7 +71,7 @@ ul{list-style:none;}
 .account-dropdown .dropdown-divider{height:1px;background:var(--gray-200);margin:6px 0;}
 
 /* ===== PRODUCT IMAGES ===== */
-.product-img img{width:100%;height:100%;object-fit:contain;transition:transform 0.4s ease;}
+.product-img img{width:100%;height:100%;object-fit:contain;transition:transform 0.4s ease;display:block;position:relative;z-index:0;}
 .product-card:hover .product-img img{transform:scale(1.05);}
 .product-img .img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
 .product-img .img-placeholder svg{opacity:0.12;width:48px;height:48px;}
@@ -124,7 +124,7 @@ ul{list-style:none;}
 .product-placeholder{width:80%;height:80%;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
 .product-placeholder svg{width:100%;height:100%;}
 .product-placeholder span{font-size:10px;font-weight:400;color:var(--gray-300);letter-spacing:2px;text-transform:uppercase;}
-.product-info{padding:16px;}
+.product-info{padding:16px;position:relative;z-index:1;background:var(--white);}
 .product-brand{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gray-400);margin-bottom:4px;}
 .product-name{font-size:14px;font-weight:500;color:var(--black);margin-bottom:2px;line-height:1.4;}
 .product-edition{font-size:12px;font-weight:300;color:var(--gray-500);margin-bottom:12px;}
@@ -340,17 +340,10 @@ ul{list-style:none;}
       <a class="nav-link has-dropdown" href="#">
         Edições
         <div class="dropdown">
-          <a href="#" onclick="navigate('edition','Jornada Juntos');return false;" style="font-weight:500;color:var(--black);">Jornada Juntos <span style="font-size:9px;background:var(--navy);color:#fff;padding:2px 6px;border-radius:10px;margin-left:4px;">NOVA</span></a>
-          <a href="#" onclick="navigate('edition','Destinos Brilhantes');return false;">Destinos Brilhantes</a>
-          <a href="#" onclick="navigate('edition','Fenda Paradoxal');return false;">Fenda Paradoxal</a>
-          <a href="#" onclick="navigate('edition','Forças Temporais');return false;">Forças Temporais</a>
-          <a href="#" onclick="navigate('edition','Chamas Obsidianas');return false;">Chamas Obsidianas</a>
-          <a href="#" onclick="navigate('edition','Máscara Crepuscular');return false;">Máscara Crepuscular</a>
+          <a href="#" onclick="navigate('edition','Ascended Heroes');return false;" style="font-weight:500;color:var(--black);">Ascended Heroes <span style="font-size:9px;background:var(--navy);color:#fff;padding:2px 6px;border-radius:10px;margin-left:4px;">NOVO</span></a>
+          <a href="#" onclick="navigate('edition','Perfect Order');return false;">Perfect Order</a>
           <div class="dropdown-divider"></div>
-          <a href="#" onclick="navigate('edition','Obsidiana 151');return false;">Obsidiana 151</a>
-          <a href="#" onclick="navigate('edition','Escarlate e Violeta');return false;">Escarlate e Violeta</a>
-          <div class="dropdown-divider"></div>
-          <a href="#" onclick="navigate('editions');return false;" style="font-weight:500;">Todas as Edições →</a>
+          <a href="#" onclick="navigate('editions');return false;" style="font-weight:500;">Ver Edições →</a>
         </div>
       </a>
       <a class="nav-link" href="#" onclick="navigate('about');return false;">Sobre</a>
@@ -364,7 +357,7 @@ ul{list-style:none;}
       </button>
       <button class="cart-btn" onclick="toggleCart()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <span class="cart-count" id="cartCount">2</span>
+        <span class="cart-count" id="cartCount">0</span>
       </button>
       <button class="account-btn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -385,11 +378,11 @@ ul{list-style:none;}
   <div class="search-box" onclick="event.stopPropagation()">
     <input type="text" class="search-input" placeholder="Buscar produtos, edições, cartas..." autofocus>
     <div class="search-hints">
-      <span class="search-hint" onclick="navigate('booster-packs')">Booster Packs</span>
+      <span class="search-hint" onclick="navigate('booster-packs')">Blisters</span>
       <span class="search-hint" onclick="navigate('boxes')">ETBs</span>
-      <span class="search-hint" onclick="navigate('singles')">Cartas Graduadas</span>
-      <span class="search-hint" onclick="navigate('edition','Jornada Juntos')">Jornada Juntos</span>
-      <span class="search-hint" onclick="navigate('edition','Destinos Brilhantes')">Destinos Brilhantes</span>
+      <span class="search-hint" onclick="navigate('graded')">Cartas Graduadas</span>
+      <span class="search-hint" onclick="navigate('edition','Ascended Heroes')">Ascended Heroes</span>
+      <span class="search-hint" onclick="navigate('edition','Perfect Order')">Perfect Order</span>
     </div>
   </div>
 </div>
@@ -403,38 +396,18 @@ ul{list-style:none;}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
-  <div class="cart-items">
-    <div class="cart-item">
-      <div class="cart-item-img" id="cartItem1Img" style="overflow:hidden;padding:4px;"></div>
-      <div class="cart-item-info">
-        <div class="cart-item-name">Booster Box — Jornada Juntos</div>
-        <div class="cart-item-edition">Pokémon TCG · 36 packs</div>
-        <div class="cart-item-bottom">
-          <span class="cart-item-price">R$ 849,90</span>
-          <span class="cart-item-qty">Qtd: 1</span>
-        </div>
-        <span class="cart-item-remove">Remover</span>
-      </div>
-    </div>
-    <div class="cart-item">
-      <div class="cart-item-img" id="cartItem2Img" style="overflow:hidden;padding:4px;"></div>
-      <div class="cart-item-info">
-        <div class="cart-item-name">ETB — Destinos Brilhantes</div>
-        <div class="cart-item-edition">Pokémon TCG · 10 packs</div>
-        <div class="cart-item-bottom">
-          <span class="cart-item-price">R$ 349,90</span>
-          <span class="cart-item-qty">Qtd: 1</span>
-        </div>
-        <span class="cart-item-remove">Remover</span>
-      </div>
+  <div class="cart-items" id="cartItemsEl">
+    <div class="cart-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <p>Seu carrinho está vazio.</p>
     </div>
   </div>
   <div class="cart-footer">
     <div class="cart-total">
       <span class="cart-total-label">Total</span>
-      <span class="cart-total-value">R$ 1.199,80</span>
+      <span class="cart-total-value" id="cartTotalValue">R$ 0,00</span>
     </div>
-    <div class="cart-installments">ou 12x de R$ 99,98 sem juros</div>
+    <div class="cart-installments" id="cartInstallments"></div>
     <button class="cart-checkout">Finalizar Compra</button>
   </div>
 </div>
@@ -446,10 +419,10 @@ ul{list-style:none;}
   <section class="hero" style="padding:0;min-height:480px;display:flex;align-items:stretch;">
     <div class="container" style="display:flex;align-items:center;gap:60px;padding-top:60px;padding-bottom:60px;width:100%;">
       <div class="hero-content" style="flex:1;">
-        <div class="hero-label">Nova Coleção Disponível</div>
-        <h1 class="hero-title"><strong>Jornada Juntos</strong><br>já está aqui.</h1>
-        <p class="hero-desc">A mais nova expansão de Pokémon TCG chegou na SK TCG. Booster Packs, Boxes e ETBs com envio seguro para todo o Brasil.</p>
-        <a class="hero-cta" href="#" onclick="navigate('edition','Jornada Juntos');return false;">
+        <div class="hero-label">Mega Evolution — 2026</div>
+        <h1 class="hero-title"><strong>Ascended Heroes</strong><br>disponível agora.</h1>
+        <p class="hero-desc">A expansão Mega Evolution — Ascended Heroes chegou na SK TCG. Blisters, ETBs e singles raros com envio seguro para todo o Brasil.</p>
+        <a class="hero-cta" href="#" onclick="navigate('edition','Ascended Heroes');return false;">
           Explorar Coleção
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
@@ -524,18 +497,17 @@ ul{list-style:none;}
     <div class="container">
       <div class="banner-card">
         <div class="banner-content">
-          <div class="banner-label">Cartas Graduadas</div>
-          <h2 class="banner-title">Invista em <strong>cards certificados</strong></h2>
-          <p class="banner-desc">Cartas avaliadas por PSA e BGS com nota garantida. Cada card acompanha case protetor e certificado de autenticidade.</p>
-          <a class="banner-cta" href="#" onclick="navigate('graded');return false;">
-            Ver Cartas Graduadas
+          <div class="banner-label">Singles Raros</div>
+          <h2 class="banner-title">Van Gogh Pikachu &amp; <strong>Charizard 1ª Ed.</strong></h2>
+          <p class="banner-desc">Pikachu Van Gogh PSA 10 e Charizard da Base Set Original com stamp de 1ª Edição. Peças icônicas para colecionadores exigentes.</p>
+          <a class="banner-cta" href="#" onclick="navigate('singles');return false;">
+            Ver Cartas
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
         <div class="banner-visual">
-          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/swsh7/74.png" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
-          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/swsh7/95.png" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
-          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/swsh9/157.png" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
+          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/svp/85.png" alt="Pikachu Van Gogh" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
+          <div class="mini-card" style="overflow:hidden;padding:4px;"><img src="https://images.pokemontcg.io/base1/4.png" alt="Charizard 1ª Ed" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" onerror="this.style.display='none';"></div>
         </div>
       </div>
     </div>
@@ -791,18 +763,8 @@ ul{list-style:none;}
 <script>
 // ===== DATA =====
 const editions = [
-  {name:'Jornada Juntos', code:'SV09', year:'2025', products:28},
-  {name:'Destinos Brilhantes', code:'SV08', year:'2025', products:22},
-  {name:'Fenda Paradoxal', code:'SV07', year:'2024', products:18},
-  {name:'Forças Temporais', code:'SV06', year:'2024', products:20},
-  {name:'Chamas Obsidianas', code:'SV05', year:'2024', products:16},
-  {name:'Máscara Crepuscular', code:'SV04', year:'2024', products:14},
-  {name:'Evoluções em Paldea', code:'SV03', year:'2023', products:12},
-  {name:'Obsidiana 151', code:'SV02', year:'2023', products:15},
-  {name:'Escarlate e Violeta', code:'SV01', year:'2023', products:18},
-  {name:'Reinado Arrepiante', code:'SS12', year:'2022', products:8},
-  {name:'Estrelas Radiantes', code:'SS11', year:'2022', products:6},
-  {name:'Origem Perdida', code:'SS10', year:'2022', products:5},
+  {name:'Ascended Heroes', code:'ME2PT5', year:'2026', products:2},
+  {name:'Perfect Order', code:'ME03', year:'2026', products:2},
 ];
 
 // Product images: cards use pokemontcg.io API; products use SVG illustrations embedded as data URIs
@@ -822,66 +784,49 @@ function makeSVG(type, setColor, setName) {
 
 // Color map for editions
 const editionColors = {
-  'Jornada Juntos':'#1B5E20','Destinos Brilhantes':'#4A148C','Fenda Paradoxal':'#B71C1C',
-  'Forças Temporais':'#0D47A1','Chamas Obsidianas':'#E65100','Máscara Crepuscular':'#4E342E',
-  'Evoluções em Paldea':'#00695C','Obsidiana 151':'#C62828','Escarlate e Violeta':'#6A1B9A',
-  'Reinado Arrepiante':'#263238','Estrelas Radiantes':'#F9A825','Origem Perdida':'#1A237E'
+  'Ascended Heroes':'#007B8C',
+  'Perfect Order':'#3D6B1E',
+  'Pokémon × Van Gogh Museum':'#4A2F00',
+  'Base Set 1ª Edição':'#8B1A1A',
 };
 
-// Real product images sourced from Amazon Brazil (m.media-amazon.com) and Pokemon.com
-// Packs: Blister Unitário EV9 Amigos de Jornada
-// Boxes: Box Display EV9 Amigos de Jornada
-// ETBs: Treinador Avançado (various SV editions)
-// Bundles: Blister Triplo EV9
-// Accessories: Ultra Pro official products
+// Official product images from Pokemon.com CDN (verified working)
 const IMG = {
-  pack:   'https://m.media-amazon.com/images/I/81ycmGkQKqL._AC_SL500_.jpg',
-  box:    'https://m.media-amazon.com/images/I/8146zREgeSL._AC_SL500_.jpg',
-  bundle: 'https://m.media-amazon.com/images/I/816MhcNamDL._AC_SL500_.jpg',
-  etb1:   'https://m.media-amazon.com/images/I/61aNYZV1fZL._AC_SL500_.jpg',
-  etb2:   'https://m.media-amazon.com/images/I/81tBxS2lYWL._AC_SL500_.jpg',
-  etb3:   'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2025/sv09-elite-trainer-box/sv09-elite-trainer-box-169-en.png',
-  sleeves:'https://m.media-amazon.com/images/I/51Bka+U3wyL._AC_SL500_.jpg',
-  deckbox:'https://m.media-amazon.com/images/I/71eHQEpM9XL._AC_SL500_.jpg',
-  playmat:'https://m.media-amazon.com/images/I/71fqj06OKaL._AC_SL500_.jpg',
+  // Ascended Heroes (ME2PT5) — Mega Evolution Series 2026
+  ahBlister: 'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-tech-sticker-collection/me2pt5-tech-sticker-collection-169-en.png',
+  ahETB:     'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me2pt5-elite-trainer-box/me2pt5-elite-trainer-box-169-en.png',
+  // Perfect Order (ME03) — Mega Evolution Series 2026
+  poBlister: 'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/me_series/me03/me03-booster-packs-169-en.png',
+  poETB:     'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/incrementals/2026/me03-elite-trainer-box/me03-elite-trainer-box-169-en.png',
+  // Single cards — pokemontcg.io API images
+  vanGogh:   'https://images.pokemontcg.io/svp/85.png',
+  charizard: 'https://images.pokemontcg.io/base1/4.png',
 };
 
 const products = [
-  // BOOSTER PACKS
-  {id:1, name:'Booster Pack — Jornada Juntos', edition:'Jornada Juntos', category:'booster-packs', ptype:'pack', img:IMG.pack, price:24.90, badge:'new', stock:'in', desc:'Pacote individual contendo 10 cartas da expansão Jornada Juntos (SV09). Cada pack pode conter cartas de diferentes raridades, incluindo chances de Illustration Rare e Special Art Rare.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'10 cartas por pack',Idioma:'Português',Origem:'Oficial — The Pokémon Company'}},
-  {id:2, name:'Booster Pack — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'booster-packs', ptype:'pack', img:IMG.pack, price:22.90, stock:'in', desc:'Pack individual com 10 cartas da expansão Destinos Brilhantes.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
-  {id:3, name:'Booster Pack — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'booster-packs', ptype:'pack', img:IMG.pack, price:19.90, stock:'in', desc:'Pack individual da expansão Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
-  {id:4, name:'Booster Pack — Forças Temporais', edition:'Forças Temporais', category:'booster-packs', ptype:'pack', img:IMG.pack, price:18.90, badge:'sale', oldPrice:22.90, stock:'in', desc:'Pack individual da expansão Forças Temporais com desconto.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'10 cartas por pack',Idioma:'Português'}},
-  {id:5, name:'Booster Pack — Obsidiana 151', edition:'Obsidiana 151', category:'booster-packs', ptype:'pack', img:IMG.pack, price:39.90, badge:'hot', stock:'low', desc:'Pack da aclamada expansão Obsidiana 151. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 cartas por pack',Idioma:'Português/Japonês'}},
-  {id:6, name:'Booster Pack — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'booster-packs', ptype:'pack', img:IMG.pack, price:21.90, stock:'in', desc:'Pack individual da expansão Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 cartas por pack'}},
+  // ASCENDED HEROES
+  {id:1, name:'Blister Triplo — Ascended Heroes', edition:'Ascended Heroes', category:'booster-packs', ptype:'pack', img:IMG.ahBlister, price:149.90, badge:'new', stock:'in',
+   desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Ascended Heroes (ME2PT5). Contém promo exclusiva e moeda metálica colecionável. Apresenta Mega Dragonite ex e mais de 290 cartas incluindo Mega Evoluções inéditas.',
+   specs:{Edição:'Ascended Heroes (ME2PT5)',Conteúdo:'3 Booster Packs + promo + moeda',Idioma:'Inglês',Lançamento:'2026'}},
+  {id:2, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'etb', img:IMG.ahETB, price:549.90, badge:'new', stock:'in',
+   desc:'Elite Trainer Box da expansão Mega Evolution — Ascended Heroes. Inclui 9 Booster Packs, promo full art de N\'s Zekrom, 65 sleeves exclusivas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
+   specs:{Edição:'Ascended Heroes (ME2PT5)',Conteúdo:'9 Booster Packs + acessórios',Promo:"N's Zekrom Full Art",Sleeves:'65 un. — design Mega Dragonite ex',Idioma:'Inglês'}},
 
-  // BOXES & ETBs
-  {id:10, name:'Booster Box — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', ptype:'box', img:IMG.box, price:849.90, badge:'new', stock:'in', desc:'Caixa lacrada contendo 36 Booster Packs da expansão Jornada Juntos. Ideal para colecionadores e jogadores que querem maximizar suas chances de pulls raros.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'36 Booster Packs',Idioma:'Português',Total:'360 cartas'}},
-  {id:11, name:'ETB — Destinos Brilhantes', edition:'Destinos Brilhantes', category:'boxes', ptype:'etb', img:IMG.etb1, price:349.90, stock:'in', desc:'Elite Trainer Box com 10 boosters, sleeves, contadores de dano, moeda e mais.', specs:{Edição:'Destinos Brilhantes (SV08)',Conteúdo:'10 Booster Packs + acessórios',Idioma:'Português'}},
-  {id:12, name:'Booster Box — Fenda Paradoxal', edition:'Fenda Paradoxal', category:'boxes', ptype:'box', img:IMG.box, price:749.90, stock:'in', desc:'Caixa lacrada com 36 packs de Fenda Paradoxal.', specs:{Edição:'Fenda Paradoxal (SV07)',Conteúdo:'36 Booster Packs'}},
-  {id:13, name:'ETB — Obsidiana 151', edition:'Obsidiana 151', category:'boxes', ptype:'etb', img:IMG.etb2, price:599.90, badge:'hot', stock:'low', desc:'Elite Trainer Box da coleção Obsidiana 151. Estoque limitado.', specs:{Edição:'Obsidiana 151 (SV02)',Conteúdo:'10 Booster Packs + acessórios'}},
-  {id:14, name:'Booster Box — Forças Temporais', edition:'Forças Temporais', category:'boxes', ptype:'box', img:IMG.box, price:699.90, badge:'sale', oldPrice:799.90, stock:'in', desc:'Box lacrado com 36 packs. Promoção por tempo limitado.', specs:{Edição:'Forças Temporais (SV06)',Conteúdo:'36 Booster Packs'}},
-  {id:15, name:'Booster Bundle — Jornada Juntos', edition:'Jornada Juntos', category:'boxes', ptype:'bundle', img:IMG.bundle, price:149.90, badge:'new', stock:'in', desc:'Bundle com 6 Booster Packs de Jornada Juntos.', specs:{Edição:'Jornada Juntos (SV09)',Conteúdo:'6 Booster Packs'}},
-  {id:16, name:'ETB — Chamas Obsidianas', edition:'Chamas Obsidianas', category:'boxes', ptype:'etb', img:IMG.etb3, price:299.90, stock:'in', desc:'Elite Trainer Box da coleção Chamas Obsidianas.', specs:{Edição:'Chamas Obsidianas (SV05)',Conteúdo:'10 Booster Packs + acessórios'}},
+  // PERFECT ORDER
+  {id:3, name:'Blister Triplo — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'pack', img:IMG.poBlister, price:149.90, stock:'in',
+   desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Perfect Order (ME03). Inclui promo foil Chikorita e moeda metálica colecionável. Baseada em Pokémon Legends: Z-A com Mega Zygarde ex como mascote.',
+   specs:{Edição:'Perfect Order (ME03)',Conteúdo:'3 Booster Packs + promo + moeda',Promo:'Chikorita foil (MEP069)',Idioma:'Inglês',Lançamento:'Mar 2026'}},
+  {id:4, name:'ETB — Perfect Order', edition:'Perfect Order', category:'boxes', ptype:'etb', img:IMG.poETB, price:549.90, stock:'in',
+   desc:'Elite Trainer Box da expansão Mega Evolution — Perfect Order. Contém 9 Booster Packs, sleeves temáticas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa de Mega Zygarde ex.',
+   specs:{Edição:'Perfect Order (ME03)',Conteúdo:'9 Booster Packs + acessórios',Mascote:'Mega Zygarde ex',Sleeves:'65 un. — design exclusivo',Idioma:'Inglês'}},
 
-  // SINGLES — card images from Pokemon TCG API
-  {id:20, name:'Charizard ex SAR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:489.90, badge:'hot', stock:'in', img:'https://images.pokemontcg.io/sv3pt5/183.png', desc:'Carta individual Charizard ex Special Art Rare da coleção Obsidiana 151. Condição Near Mint (NM).', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)',Número:'#183/165'}},
-  {id:21, name:'Pikachu ex IR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:129.90, badge:'new', stock:'in', img:'https://images.pokemontcg.io/sv3pt5/172.png', desc:'Pikachu ex Illustration Rare.', specs:{Edição:'Obsidiana 151',Raridade:'Illustration Rare (IR)',Condição:'Near Mint (NM)'}},
-  {id:22, name:'Mewtwo ex SAR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:349.90, stock:'in', img:'https://images.pokemontcg.io/sv3pt5/182.png', desc:'Mewtwo ex Special Art Rare. Condição NM.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Special Art Rare (SAR)',Condição:'Near Mint (NM)'}},
-  {id:23, name:'Gardevoir ex UR', edition:'Destinos Brilhantes', category:'singles', ptype:'card', price:89.90, stock:'in', img:'https://images.pokemontcg.io/sv4pt5/86.png', desc:'Gardevoir ex Ultra Rare. Condição NM.', specs:{Edição:'Destinos Brilhantes',Raridade:'Ultra Rare (UR)',Condição:'Near Mint (NM)'}},
-  {id:24, name:'Mew ex HR', edition:'Obsidiana 151', category:'singles', ptype:'card', price:199.90, stock:'low', img:'https://images.pokemontcg.io/sv3pt5/151.png', desc:'Mew ex Hyper Rare gold. Disponibilidade limitada.', specs:{Edição:'Obsidiana 151 (SV02)',Raridade:'Hyper Rare (HR)',Condição:'Near Mint (NM)'}},
-
-  // GRADED
-  {id:30, name:'Charizard VMAX PSA 10', edition:'Reinado Arrepiante', category:'graded', ptype:'card', price:2499.90, badge:'graded', stock:'in', img:'https://images.pokemontcg.io/swsh7/74.png', desc:'Charizard VMAX #74 graduada pela PSA com nota 10 (Gem Mint). Acompanha case original PSA e certificado.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'PSA 10 — Gem Mint',Certificado:'#87456321',Encapsulada:'Sim — case PSA'}},
-  {id:31, name:'Pikachu V FA PSA 9', edition:'Estrelas Radiantes', category:'graded', ptype:'card', price:599.90, badge:'graded', stock:'in', img:'https://images.pokemontcg.io/swsh9/157.png', desc:'Pikachu V Full Art graduada PSA 9.', specs:{Edição:'Estrelas Radiantes (SS11)',Nota:'PSA 9 — Mint',Encapsulada:'Sim — case PSA'}},
-  {id:32, name:'Umbreon VMAX Alt Art BGS 9.5', edition:'Reinado Arrepiante', category:'graded', ptype:'card', price:3999.90, badge:'graded', stock:'in', img:'https://images.pokemontcg.io/swsh7/95.png', desc:'Uma das cartas mais procuradas da era moderna, graduada BGS 9.5.', specs:{Edição:'Reinado Arrepiante (SS12)',Nota:'BGS 9.5 — Gem Mint',Encapsulada:'Sim — case BGS'}},
-
-  // ACCESSORIES
-  {id:40, name:'Sleeves Ultra Pro Pokéball', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.sleeves, price:29.90, stock:'in', desc:'Pacote com 65 sleeves oficiais Ultra Pro com estampa de Pokéball.', specs:{Quantidade:'65 unidades',Material:'Polipropileno',Tamanho:'Standard (66x91mm)'}},
-  {id:41, name:'Deck Box Ultra Pro — Pikachu', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.deckbox, price:49.90, stock:'in', desc:'Deck box oficial com capacidade para 80+ cartas com sleeves.', specs:{Capacidade:'80+ cartas',Material:'Plástico rígido',Fechamento:'Magnético'}},
-  {id:42, name:'Playmat Oficial — Charizard', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.playmat, price:149.90, stock:'low', desc:'Playmat oficial de jogo com estampa de Charizard. Superfície premium.', specs:{Tamanho:'60x35cm',Material:'Borracha + tecido',Superfície:'Anti-deslizante'}},
-  {id:43, name:'Top Loader Ultra Pro (25un)', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.sleeves, price:19.90, stock:'in', desc:'Pack com 25 top loaders rígidos para proteção de cartas.', specs:{Quantidade:'25 unidades',Material:'PVC rígido',Tamanho:'3x4"'}},
-  {id:44, name:'Álbum 9 Bolsos — 360 Cards', edition:'Acessório', category:'accessories', ptype:'accessory', img:IMG.deckbox, price:89.90, stock:'in', desc:'Álbum premium com páginas de 9 bolsos. Comporta 360 cartas.', specs:{Capacidade:'360 cartas',Páginas:'20 (9 bolsos cada)',Material:'Couro sintético'}},
+  // SINGLES
+  {id:5, name:'Pikachu Van Gogh PSA 10', edition:'Pokémon × Van Gogh Museum', category:'graded', ptype:'card', img:IMG.vanGogh, price:1899.90, badge:'graded', stock:'in',
+   desc:'Pikachu with Grey Felt Hat — carta promo da colaboração exclusiva Pokémon × Van Gogh Museum (2023), inspirada no autorretrato "Self-Portrait with Grey Felt Hat" de Van Gogh. Graduada PSA 10 (Gem Mint). Card #SVP-085.',
+   specs:{Edição:'Van Gogh Museum Promo (SVP)',Número:'#085',Condição:'PSA 10 — Gem Mint',Encapsulada:'Sim — case PSA original',Ano:'2023'}},
+  {id:6, name:'Charizard 1ª Edição — Raw', edition:'Base Set 1ª Edição', category:'singles', ptype:'card', img:IMG.charizard, price:2499.90, stock:'in',
+   desc:'Charizard Holo Rare #4/102 da Base Set Original com stamp de 1ª Edição (1999). Condição Near Mint (NM) avaliada visualmente. Uma das cartas mais icônicas e valiosas da história do Pokémon TCG. Não graduada.',
+   specs:{Edição:'Base Set 1ª Edição (1999)',Número:'#4/102',Raridade:'Holo Rare',Condição:'Near Mint (NM) — Não Graduada',Stamp:'1st Edition'}},
 ];
 
 const categoryLabels = {
@@ -929,7 +874,7 @@ function renderProductCard(p){
             ${oldPriceHTML}
             <span class="product-price">R$ ${p.price.toFixed(2).replace('.',',')}</span>
           </div>
-          <button class="add-cart-btn" onclick="event.stopPropagation();" title="Adicionar ao carrinho">
+          <button class="add-cart-btn" onclick="event.stopPropagation();addToCart(${p.id});" title="Adicionar ao carrinho">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
@@ -973,22 +918,22 @@ function navigate(page, param){
     showListing(param, `Edição: ${param}`, filtered, ['Booster Packs','Boxes','Singles']);
   }
   else if(page==='booster-packs'){
-    showListing('Booster Packs','Booster Packs', products.filter(p=>p.category==='booster-packs'), editions.slice(0,5).map(e=>e.name));
+    showListing('Blisters','Blisters', products.filter(p=>p.category==='booster-packs'), ['Ascended Heroes','Perfect Order']);
   }
   else if(page==='boxes'){
-    showListing('Boxes & ETBs','Boxes & ETBs', products.filter(p=>p.category==='boxes'), ['Booster Box','ETB','Bundle']);
+    showListing('Boxes & ETBs','Boxes & ETBs', products.filter(p=>p.category==='boxes'), ['Ascended Heroes','Perfect Order']);
   }
   else if(page==='singles'){
-    showListing('Cartas Individuais','Cartas Individuais', products.filter(p=>p.category==='singles'), ['Near Mint','Full Art','Special Art Rare']);
+    showListing('Cartas Individuais','Cartas Individuais', products.filter(p=>p.category==='singles'||p.category==='graded'), ['Near Mint','Graduada PSA']);
   }
   else if(page==='graded'){
-    showListing('Cartas Graduadas','Cartas Graduadas', products.filter(p=>p.category==='graded'), ['PSA 10','PSA 9','BGS 9.5']);
+    showListing('Cartas Graduadas','Cartas Graduadas', products.filter(p=>p.category==='graded'), ['PSA 10']);
   }
   else if(page==='accessories'){
-    showListing('Acessórios','Acessórios', products.filter(p=>p.category==='accessories'), ['Sleeves','Deck Box','Playmat','Top Loader']);
+    showListing('Acessórios','Acessórios', products.filter(p=>p.category==='accessories'), []);
   }
   else if(page==='all'){
-    showListing('Todos os Produtos','Todos os Produtos', products, Object.values(categoryLabels).slice(0,5));
+    showListing('Todos os Produtos','Todos os Produtos', products, ['Blisters','ETBs','Singles','Graduadas']);
   }
   else if(page==='detail'){
     showDetail(param);
@@ -1057,7 +1002,7 @@ function showDetail(productId){
       <div class="product-stock ${p.stock==='low'?'low':''}">${p.stock==='in'?'Em estoque':p.stock==='low'?'Últimas unidades':'Esgotado'}</div>
     </div>
     <div class="detail-cta">
-      <button class="btn-primary">Adicionar ao Carrinho</button>
+      <button class="btn-primary" onclick="addToCart(${p.id})">Adicionar ao Carrinho</button>
       <button class="btn-secondary">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
@@ -1069,6 +1014,68 @@ function updateQty(d){
   qty = Math.max(1, Math.min(99, qty+d));
   const el = document.getElementById('qtyVal');
   if(el) el.textContent = qty;
+}
+
+// ===== CART STATE =====
+let cart = [];
+
+function addToCart(id){
+  const existing = cart.find(x => x.id === id);
+  if(existing){ existing.qty++; }
+  else { cart.push({id: id, qty: 1}); }
+  renderCart();
+  document.getElementById('cartOverlay').classList.add('active');
+  document.getElementById('cartSidebar').classList.add('active');
+}
+
+function removeFromCart(id){
+  cart = cart.filter(x => x.id !== id);
+  renderCart();
+}
+
+function renderCart(){
+  const totalQty = cart.reduce((s, c) => s + c.qty, 0);
+  document.getElementById('cartCount').textContent = totalQty;
+
+  const itemsEl = document.getElementById('cartItemsEl');
+
+  if(cart.length === 0){
+    itemsEl.innerHTML = `<div class="cart-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <p>Seu carrinho está vazio.</p>
+    </div>`;
+    document.getElementById('cartTotalValue').textContent = 'R$ 0,00';
+    document.getElementById('cartInstallments').textContent = '';
+    return;
+  }
+
+  const total = cart.reduce((s, c) => {
+    const p = products.find(x => x.id === c.id);
+    return s + (p ? p.price * c.qty : 0);
+  }, 0);
+
+  itemsEl.innerHTML = cart.map(c => {
+    const p = products.find(x => x.id === c.id);
+    if(!p) return '';
+    const imgHTML = p.img
+      ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`
+      : '';
+    return `<div class="cart-item">
+      <div class="cart-item-img" style="overflow:hidden;padding:4px;">${imgHTML}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${p.name}</div>
+        <div class="cart-item-edition">Pokémon TCG · ${p.edition}</div>
+        <div class="cart-item-bottom">
+          <span class="cart-item-price">R$ ${(p.price * c.qty).toFixed(2).replace('.',',')}</span>
+          <span class="cart-item-qty">Qtd: ${c.qty}</span>
+        </div>
+        <span class="cart-item-remove" onclick="removeFromCart(${p.id})">Remover</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('cartTotalValue').textContent = `R$ ${total.toFixed(2).replace('.',',')}`;
+  document.getElementById('cartInstallments').textContent = `ou 12x de R$ ${(total/12).toFixed(2).replace('.',',')} sem juros`;
 }
 
 // ===== UI HELPERS =====
@@ -1097,27 +1104,44 @@ document.addEventListener('keydown',function(e){
 
 // ===== INIT =====
 function init(){
-  // Featured products (mix of categories)
-  const featured = [products[0], products[9], products[19], products[4], products[10], products[20], products[12], products[29]].filter(Boolean);
-  document.getElementById('featuredGrid').innerHTML = featured.map(renderProductCard).join('');
+  // Featured products — all 6 products
+  document.getElementById('featuredGrid').innerHTML = products.map(renderProductCard).join('');
 
   // Home editions
-  document.getElementById('editionsGrid').innerHTML = editions.slice(0,6).map(e=>renderEditionCard(e,false)).join('');
+  document.getElementById('editionsGrid').innerHTML = editions.map(e=>renderEditionCard(e,false)).join('');
 
-  // Hero product visuals
-  const jjColor = editionColors['Jornada Juntos'];
+  // Hero product visuals — Ascended Heroes theme
+  const ahColor = editionColors['Ascended Heroes'];
   const heroETB = document.getElementById('heroETB');
   const heroBox = document.getElementById('heroBox');
   const heroPack = document.getElementById('heroPack');
-  if(heroETB) heroETB.innerHTML = makeSVG('etb', jjColor, 'Jornada Juntos');
-  if(heroBox) heroBox.innerHTML = makeSVG('box', jjColor, 'Jornada Juntos');
-  if(heroPack) heroPack.innerHTML = makeSVG('pack', jjColor, 'Jornada Juntos');
-
-  // Cart item images (box and etb)
-  const c1 = document.getElementById('cartItem1Img');
-  const c2 = document.getElementById('cartItem2Img');
-  if(c1) c1.innerHTML = `<img src="${IMG.box}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
-  if(c2) c2.innerHTML = `<img src="${IMG.etb1}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
+  if(heroETB){
+    heroETB.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = IMG.ahETB;
+    img.alt = 'ETB Ascended Heroes';
+    img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('etb', ahColor, 'Ascended Heroes'); };
+    heroETB.appendChild(img);
+  }
+  if(heroBox){
+    heroBox.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = IMG.poETB;
+    img.alt = 'ETB Perfect Order';
+    img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('etb', editionColors['Perfect Order'], 'Perfect Order'); };
+    heroBox.appendChild(img);
+  }
+  if(heroPack){
+    heroPack.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = IMG.ahBlister;
+    img.alt = 'Blister Ascended Heroes';
+    img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('pack', ahColor, 'Ascended Heroes'); };
+    heroPack.appendChild(img);
+  }
 }
 init();
 </script>
