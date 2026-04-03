@@ -68,8 +68,8 @@ ul{list-style:none;}
 .cart-count{background:var(--purple);color:var(--white);font-size:9px;font-weight:600;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:absolute;top:-6px;right:-10px;}
 .account-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--gray-600);transition:var(--transition);position:relative;}
 .account-btn:hover{color:var(--black);}
-.account-dropdown{position:absolute;top:calc(100% + 12px);right:0;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:12px 0;min-width:200px;box-shadow:var(--shadow-hover);opacity:0;pointer-events:none;transform:translateY(8px);transition:var(--transition);z-index:100;}
-.account-btn:hover .account-dropdown{opacity:1;pointer-events:all;transform:translateY(0);}
+.account-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:12px 0;min-width:200px;box-shadow:var(--shadow-hover);opacity:0;pointer-events:none;transform:translateY(8px);transition:var(--transition);z-index:100;}
+.account-dropdown.open{opacity:1;pointer-events:all;transform:translateY(0);}
 .account-dropdown a{display:block;padding:8px 20px;font-size:13px;font-weight:300;color:var(--gray-600);}
 .account-dropdown a:hover{background:var(--gray-50);color:var(--black);}
 .account-dropdown .dropdown-divider{height:1px;background:var(--gray-200);margin:6px 0;}
@@ -309,6 +309,63 @@ ul{list-style:none;}
   .hero-title{font-size:32px;}
   .values-grid{grid-template-columns:1fr;}
 }
+
+/* ===== AUTH MODAL ===== */
+.auth-modal{position:fixed;inset:0;background:rgba(10,10,10,0.55);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.auth-modal.active{display:flex;}
+.auth-modal-box{background:var(--white);border-radius:var(--radius-lg);padding:40px;width:90%;max-width:480px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.18);max-height:90vh;overflow-y:auto;}
+.auth-close{position:absolute;top:16px;right:20px;font-size:22px;color:var(--gray-400);transition:var(--transition);line-height:1;}
+.auth-close:hover{color:var(--black);}
+.auth-logo{text-align:center;margin-bottom:24px;}
+.auth-logo-text{font-size:13px;font-weight:300;letter-spacing:4px;color:var(--gray-400);text-transform:uppercase;margin-top:4px;}
+.auth-tabs{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:28px;gap:0;}
+.auth-tab{flex:1;font-size:13px;font-weight:400;color:var(--gray-400);padding:10px 0;text-align:center;border-bottom:2px solid transparent;margin-bottom:-1px;transition:var(--transition);}
+.auth-tab.active{color:var(--black);border-bottom-color:var(--purple);}
+.auth-form{display:flex;flex-direction:column;gap:12px;}
+.auth-input{width:100%;border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;font-size:13px;font-family:'Inter',sans-serif;color:var(--black);outline:none;transition:var(--transition);background:var(--white);}
+.auth-input:focus{border-color:var(--purple);}
+.auth-input::placeholder{color:var(--gray-300);}
+.auth-btn{background:var(--purple);color:var(--white);padding:13px;border-radius:8px;font-size:13px;font-weight:500;letter-spacing:0.5px;transition:var(--transition);margin-top:4px;}
+.auth-btn:hover{background:var(--purple-dark);}
+.auth-btn-outline{background:transparent;color:var(--purple);border:1px solid var(--purple);padding:11px;border-radius:8px;font-size:13px;font-weight:500;transition:var(--transition);}
+.auth-btn-outline:hover{background:var(--purple);color:var(--white);}
+.auth-err{font-size:12px;color:var(--red);min-height:16px;font-weight:400;}
+.auth-success{font-size:12px;color:var(--green);min-height:16px;font-weight:400;}
+.auth-link{text-align:center;font-size:12px;color:var(--gray-400);transition:var(--transition);}
+.auth-link:hover{color:var(--purple);}
+.auth-desc{font-size:13px;color:var(--gray-500);font-weight:300;line-height:1.6;text-align:center;}
+.auth-section-title{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gray-400);padding-top:8px;}
+.auth-row{display:flex;gap:8px;}
+.auth-cep-btn{background:var(--navy);color:var(--white);border-radius:8px;padding:0 14px;font-size:12px;font-weight:400;transition:var(--transition);white-space:nowrap;}
+.auth-cep-btn:hover{background:var(--navy-mid);}
+.auth-divider{height:1px;background:var(--gray-100);margin:4px 0;}
+
+/* ===== ACCOUNT PAGE ===== */
+.account-layout{display:grid;grid-template-columns:220px 1fr;gap:40px;padding-top:48px;padding-bottom:80px;align-items:start;}
+.account-sidebar{background:var(--gray-50);border-radius:var(--radius-lg);padding:8px;border:1px solid var(--gray-100);}
+.acc-nav-btn{display:block;width:100%;text-align:left;padding:11px 16px;font-size:13px;font-weight:400;color:var(--gray-600);border-radius:8px;transition:var(--transition);}
+.acc-nav-btn:hover{background:var(--white);color:var(--black);}
+.acc-nav-btn.active{background:var(--white);color:var(--black);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.acc-nav-btn.danger{color:var(--red);}
+.acc-nav-btn.danger:hover{background:rgba(192,57,43,0.06);}
+.acc-nav-divider{height:1px;background:var(--gray-200);margin:6px 8px;}
+.account-main{}
+.acc-section{display:none;}
+.acc-section.active{display:block;}
+.acc-section h2{font-size:20px;font-weight:300;letter-spacing:1px;margin-bottom:28px;color:var(--black);}
+.acc-empty{text-align:center;padding:60px 20px;color:var(--gray-400);}
+.acc-empty p{font-size:14px;font-weight:300;margin-bottom:20px;}
+.acc-address-card{border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;margin-bottom:16px;position:relative;}
+.acc-address-card h4{font-size:13px;font-weight:500;margin-bottom:6px;}
+.acc-address-card p{font-size:13px;font-weight:300;color:var(--gray-500);line-height:1.5;}
+.acc-address-actions{margin-top:12px;display:flex;gap:12px;}
+.acc-address-actions button{font-size:12px;color:var(--purple);font-weight:400;}
+.acc-address-actions button.del{color:var(--red);}
+.acc-orders-empty{text-align:center;padding:60px 20px;}
+.acc-orders-empty svg{opacity:.12;margin:0 auto 16px;}
+.add-address-form{border:1px solid var(--gray-200);border-radius:var(--radius);padding:24px;margin-top:20px;display:none;}
+.add-address-form.open{display:block;}
+.account-name-chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:400;color:var(--gray-700);}
 </style>
 </head>
 <body>
@@ -361,14 +418,14 @@ ul{list-style:none;}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span class="cart-count" id="cartCount">0</span>
       </button>
-      <button class="account-btn">
+      <button class="account-btn" onclick="toggleAccountDropdown(event)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <div class="account-dropdown">
-          <a href="#" onclick="event.preventDefault();">Entrar</a>
-          <a href="#" onclick="event.preventDefault();">Criar Conta</a>
+          <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Entrar</a>
+          <a href="#" onclick="closeAccountDropdown();openAuth('register');return false;">Criar Conta</a>
           <div class="dropdown-divider"></div>
-          <a href="#" onclick="event.preventDefault();">Meus Pedidos</a>
-          <a href="#" onclick="event.preventDefault();">Favoritos</a>
+          <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Meus Pedidos</a>
+          <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Favoritos</a>
         </div>
       </button>
     </div>
@@ -710,6 +767,157 @@ ul{list-style:none;}
   </section>
 </div>
 
+<!-- AUTH MODAL -->
+<div class="auth-modal" id="authModal" onclick="handleAuthOverlayClick(event)">
+  <div class="auth-modal-box">
+    <button class="auth-close" onclick="closeAuth()">&#x2715;</button>
+    <div class="auth-logo">
+      <div style="font-size:18px;font-weight:500;letter-spacing:2px;color:var(--navy);">SK <span style="color:var(--purple);">TCG</span></div>
+      <div class="auth-logo-text" id="authLogoSub">Acesse sua conta</div>
+    </div>
+
+    <!-- Tabs login / cadastro -->
+    <div class="auth-tabs" id="authTabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Criar Conta</button>
+    </div>
+
+    <!-- FORM LOGIN -->
+    <form id="form-login" class="auth-form" onsubmit="doLogin(event)">
+      <input class="auth-input" type="email" id="login-email" placeholder="E-mail" required autocomplete="email">
+      <input class="auth-input" type="password" id="login-password" placeholder="Senha" required autocomplete="current-password">
+      <div class="auth-err" id="login-err"></div>
+      <button class="auth-btn" type="submit">Entrar</button>
+      <a class="auth-link" href="#" onclick="switchTab('recover');return false;">Esqueci minha senha</a>
+    </form>
+
+    <!-- FORM CADASTRO -->
+    <form id="form-register" class="auth-form" style="display:none" onsubmit="doRegister(event)">
+      <input class="auth-input" type="text" id="reg-name" placeholder="Nome completo" required autocomplete="name">
+      <input class="auth-input" type="email" id="reg-email" placeholder="E-mail" required autocomplete="email">
+      <input class="auth-input" type="password" id="reg-password" placeholder="Senha (mín. 8 caracteres)" required minlength="8" autocomplete="new-password">
+      <input class="auth-input" type="password" id="reg-password2" placeholder="Confirmar senha" required autocomplete="new-password">
+      <input class="auth-input" type="tel" id="reg-phone" placeholder="Telefone / WhatsApp" autocomplete="tel">
+      <input class="auth-input" type="text" id="reg-cpf" placeholder="CPF (000.000.000-00)">
+      <div class="auth-divider"></div>
+      <div class="auth-section-title">Endereço de Entrega</div>
+      <div class="auth-row">
+        <input class="auth-input" type="text" id="reg-cep" placeholder="CEP" style="flex:1" maxlength="9">
+        <button class="auth-cep-btn" type="button" onclick="fetchCEP('reg')">Buscar</button>
+      </div>
+      <input class="auth-input" type="text" id="reg-street" placeholder="Rua / Logradouro">
+      <div class="auth-row">
+        <input class="auth-input" type="text" id="reg-number" placeholder="Número" style="flex:0 0 90px">
+        <input class="auth-input" type="text" id="reg-complement" placeholder="Complemento" style="flex:1">
+      </div>
+      <input class="auth-input" type="text" id="reg-neighborhood" placeholder="Bairro">
+      <div class="auth-row">
+        <input class="auth-input" type="text" id="reg-city" placeholder="Cidade" style="flex:1">
+        <input class="auth-input" type="text" id="reg-state" placeholder="UF" style="flex:0 0 64px" maxlength="2">
+      </div>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="auth-btn" type="submit">Criar Conta</button>
+      <a class="auth-link" href="#" onclick="switchTab('login');return false;">Já tenho conta</a>
+    </form>
+
+    <!-- FORM RECUPERAR SENHA -->
+    <form id="form-recover" class="auth-form" style="display:none" onsubmit="doRecover(event)">
+      <p class="auth-desc">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
+      <input class="auth-input" type="email" id="recover-email" placeholder="E-mail" required autocomplete="email">
+      <div class="auth-err" id="recover-err"></div>
+      <div class="auth-success" id="recover-ok"></div>
+      <button class="auth-btn" type="submit">Enviar link</button>
+      <a class="auth-link" href="#" onclick="switchTab('login');return false;">&#8592; Voltar ao login</a>
+    </form>
+  </div>
+</div>
+
+<!-- PÁGINA: MINHA CONTA -->
+<div class="page" id="page-account">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="#" onclick="navigate('home');return false;">Home</a> / Minha Conta</div>
+      <h1 id="accountPageTitle">Minha Conta</h1>
+    </div>
+  </div>
+  <div class="account-layout container">
+    <!-- Sidebar -->
+    <nav class="account-sidebar">
+      <button class="acc-nav-btn active" id="accNav-orders" onclick="showAccountSection('orders')">Meus Pedidos</button>
+      <button class="acc-nav-btn" id="accNav-favorites" onclick="showAccountSection('favorites')">Favoritos</button>
+      <button class="acc-nav-btn" id="accNav-profile" onclick="showAccountSection('profile')">Dados Pessoais</button>
+      <button class="acc-nav-btn" id="accNav-addresses" onclick="showAccountSection('addresses')">Endereços</button>
+      <div class="acc-nav-divider"></div>
+      <button class="acc-nav-btn danger" onclick="doLogout()">Sair da conta</button>
+    </nav>
+    <!-- Conteúdo -->
+    <div class="account-main">
+      <!-- Meus Pedidos -->
+      <div class="acc-section active" id="acc-orders">
+        <h2>Meus Pedidos</h2>
+        <div class="acc-orders-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <p style="font-size:14px;font-weight:300;color:var(--gray-400);margin-bottom:20px;">Você ainda não fez nenhum pedido.</p>
+          <button class="auth-btn" style="display:inline-block;width:auto;padding:12px 32px;" onclick="navigate('all')">Ver produtos</button>
+        </div>
+      </div>
+      <!-- Favoritos -->
+      <div class="acc-section" id="acc-favorites">
+        <h2>Favoritos</h2>
+        <div class="acc-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <p>Nenhum produto favoritado ainda.</p>
+        </div>
+      </div>
+      <!-- Dados Pessoais -->
+      <div class="acc-section" id="acc-profile">
+        <h2>Dados Pessoais</h2>
+        <form class="auth-form" onsubmit="saveProfile(event)" style="max-width:420px;">
+          <input class="auth-input" type="text" id="profile-name" placeholder="Nome completo" autocomplete="name">
+          <input class="auth-input" type="email" id="profile-email" placeholder="E-mail" readonly style="opacity:.55;cursor:not-allowed;" autocomplete="email">
+          <input class="auth-input" type="tel" id="profile-phone" placeholder="Telefone / WhatsApp" autocomplete="tel">
+          <input class="auth-input" type="text" id="profile-cpf" placeholder="CPF (000.000.000-00)">
+          <div class="auth-divider"></div>
+          <div class="auth-section-title">Alterar Senha</div>
+          <input class="auth-input" type="password" id="profile-newpw" placeholder="Nova senha (deixe em branco para manter)">
+          <input class="auth-input" type="password" id="profile-newpw2" placeholder="Confirmar nova senha">
+          <div class="auth-err" id="profile-err"></div>
+          <div class="auth-success" id="profile-ok"></div>
+          <button class="auth-btn" type="submit">Salvar alterações</button>
+        </form>
+      </div>
+      <!-- Endereços -->
+      <div class="acc-section" id="acc-addresses">
+        <h2>Endereços Salvos</h2>
+        <div id="addressesList"></div>
+        <button class="auth-btn-outline" onclick="toggleAddAddressForm()" style="margin-top:8px;padding:11px 24px;display:inline-block;width:auto;">+ Adicionar endereço</button>
+        <div class="add-address-form" id="addAddressForm">
+          <form class="auth-form" onsubmit="saveNewAddress(event)">
+            <div class="auth-row">
+              <input class="auth-input" type="text" id="adr-cep" placeholder="CEP" style="flex:1" maxlength="9">
+              <button class="auth-cep-btn" type="button" onclick="fetchCEP('adr')">Buscar</button>
+            </div>
+            <input class="auth-input" type="text" id="adr-street" placeholder="Rua / Logradouro">
+            <div class="auth-row">
+              <input class="auth-input" type="text" id="adr-number" placeholder="Número" style="flex:0 0 90px">
+              <input class="auth-input" type="text" id="adr-complement" placeholder="Complemento" style="flex:1">
+            </div>
+            <input class="auth-input" type="text" id="adr-neighborhood" placeholder="Bairro">
+            <div class="auth-row">
+              <input class="auth-input" type="text" id="adr-city" placeholder="Cidade" style="flex:1">
+              <input class="auth-input" type="text" id="adr-state" placeholder="UF" style="flex:0 0 64px" maxlength="2">
+            </div>
+            <div class="auth-row" style="margin-top:4px;">
+              <button class="auth-btn" type="submit" style="flex:1;">Salvar endereço</button>
+              <button class="auth-btn-outline" type="button" onclick="toggleAddAddressForm()" style="flex:0 0 auto;padding:11px 20px;">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer class="footer">
   <div class="container">
@@ -937,6 +1145,14 @@ function navigate(page, param){
   else if(page==='detail'){
     showDetail(param);
   }
+  else if(page==='account'){
+    const user = authMock.getUser();
+    if (!user) { openAuth('login'); return; }
+    document.getElementById('page-account').classList.add('active');
+    const title = document.getElementById('accountPageTitle');
+    if (title) title.textContent = 'Olá, ' + (user.name ? user.name.split(' ')[0] : 'Cliente');
+    showAccountSection(param || 'orders');
+  }
 }
 
 function showListing(title, breadcrumb, items, filters){
@@ -1105,7 +1321,396 @@ document.addEventListener('keydown',function(e){
 });
 
 // ===== INIT =====
+
+// ============================================================
+// AUTH — Mock com localStorage
+// ============================================================
+// PARA CONECTAR AO SUPABASE, substitua os métodos de authMock:
+//   login    → supabase.auth.signInWithPassword({ email, password })
+//   register → supabase.auth.signUp({ email, password }) + INSERT em tabela `users`
+//   logout   → supabase.auth.signOut()
+//   getUser  → supabase.auth.getUser()
+//   update   → supabase.auth.updateUser() + UPDATE em tabela `users`
+// ============================================================
+const authMock = {
+  _users() { return JSON.parse(localStorage.getItem('sk_users') || '[]'); },
+  _saveUsers(u) { localStorage.setItem('sk_users', JSON.stringify(u)); },
+  _session(u) { localStorage.setItem('sk_session', JSON.stringify(u)); },
+
+  login(email, pw) {
+    const user = this._users().find(u => u.email === email && u.password === pw);
+    if (!user) throw new Error('E-mail ou senha incorretos.');
+    this._session(user);
+    return user;
+  },
+  register(data) {
+    const users = this._users();
+    if (users.find(u => u.email === data.email)) throw new Error('E-mail já cadastrado.');
+    const user = { ...data, id: Date.now(), addresses: data.address ? [{ ...data.address, id: Date.now(), label: 'Principal' }] : [] };
+    delete user.address;
+    users.push(user);
+    this._saveUsers(users);
+    this._session(user);
+    return user;
+  },
+  logout() { localStorage.removeItem('sk_session'); },
+  getUser() { const s = localStorage.getItem('sk_session'); return s ? JSON.parse(s) : null; },
+  updateUser(data) {
+    const users = this._users();
+    const idx = users.findIndex(u => u.id === data.id);
+    if (idx !== -1) {
+      users[idx] = { ...users[idx], ...data };
+      this._saveUsers(users);
+      this._session(users[idx]);
+      return users[idx];
+    }
+    return null;
+  },
+  addAddress(userId, addr) {
+    const users = this._users();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      if (!users[idx].addresses) users[idx].addresses = [];
+      const newAddr = { ...addr, id: Date.now() };
+      users[idx].addresses.push(newAddr);
+      this._saveUsers(users);
+      this._session(users[idx]);
+    }
+  },
+  removeAddress(userId, addrId) {
+    const users = this._users();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      users[idx].addresses = (users[idx].addresses || []).filter(a => a.id !== addrId);
+      this._saveUsers(users);
+      this._session(users[idx]);
+    }
+  },
+  recoverPassword(email) {
+    // Mock: só verifica se o e-mail existe
+    // Com Supabase: supabase.auth.resetPasswordForEmail(email)
+    const user = this._users().find(u => u.email === email);
+    if (!user) throw new Error('E-mail não encontrado.');
+    return true;
+  }
+};
+
+// ===== MODAL AUTH =====
+function openAuth(tab) {
+  tab = tab || 'login';
+  switchTab(tab);
+  document.getElementById('authModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeAuth() {
+  document.getElementById('authModal').classList.remove('active');
+  document.body.style.overflow = '';
+  // limpar erros
+  ['login-err','reg-err','recover-err'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+}
+function handleAuthOverlayClick(e) {
+  if (e.target === document.getElementById('authModal')) closeAuth();
+}
+function switchTab(tab) {
+  const tabs = ['login','register','recover'];
+  tabs.forEach(t => {
+    const form = document.getElementById('form-'+t);
+    if (form) form.style.display = 'none';
+  });
+  const authTabs = document.getElementById('authTabs');
+  const sub = document.getElementById('authLogoSub');
+  if (tab === 'login') {
+    document.getElementById('form-login').style.display = 'flex';
+    if (authTabs) authTabs.style.display = 'flex';
+    document.getElementById('tab-login').classList.add('active');
+    document.getElementById('tab-register').classList.remove('active');
+    if (sub) sub.textContent = 'Acesse sua conta';
+  } else if (tab === 'register') {
+    document.getElementById('form-register').style.display = 'flex';
+    if (authTabs) authTabs.style.display = 'flex';
+    document.getElementById('tab-login').classList.remove('active');
+    document.getElementById('tab-register').classList.add('active');
+    if (sub) sub.textContent = 'Crie sua conta';
+  } else if (tab === 'recover') {
+    document.getElementById('form-recover').style.display = 'flex';
+    if (authTabs) authTabs.style.display = 'none';
+    if (sub) sub.textContent = 'Recuperar senha';
+  }
+}
+
+// ===== AÇÕES AUTH =====
+function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-password').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  try {
+    authMock.login(email, pw);
+    closeAuth();
+    updateAuthUI();
+  } catch(ex) { err.textContent = ex.message; }
+}
+
+function doRegister(e) {
+  e.preventDefault();
+  const err = document.getElementById('reg-err');
+  err.textContent = '';
+  const pw = document.getElementById('reg-password').value;
+  const pw2 = document.getElementById('reg-password2').value;
+  if (pw !== pw2) { err.textContent = 'As senhas não coincidem.'; return; }
+  const data = {
+    name: document.getElementById('reg-name').value.trim(),
+    email: document.getElementById('reg-email').value.trim(),
+    password: pw,
+    phone: document.getElementById('reg-phone').value.trim(),
+    cpf: document.getElementById('reg-cpf').value.trim(),
+    address: {
+      cep: document.getElementById('reg-cep').value.trim(),
+      street: document.getElementById('reg-street').value.trim(),
+      number: document.getElementById('reg-number').value.trim(),
+      complement: document.getElementById('reg-complement').value.trim(),
+      neighborhood: document.getElementById('reg-neighborhood').value.trim(),
+      city: document.getElementById('reg-city').value.trim(),
+      state: document.getElementById('reg-state').value.trim(),
+    }
+  };
+  if (!data.name || !data.email) { err.textContent = 'Preencha nome e e-mail.'; return; }
+  try {
+    authMock.register(data);
+    closeAuth();
+    updateAuthUI();
+  } catch(ex) { err.textContent = ex.message; }
+}
+
+function doRecover(e) {
+  e.preventDefault();
+  const email = document.getElementById('recover-email').value.trim();
+  const err = document.getElementById('recover-err');
+  const ok = document.getElementById('recover-ok');
+  err.textContent = ''; ok.textContent = '';
+  try {
+    authMock.recoverPassword(email);
+    ok.textContent = 'Link enviado! Verifique seu e-mail. (simulado)';
+  } catch(ex) { err.textContent = ex.message; }
+}
+
+function doLogout() {
+  authMock.logout();
+  updateAuthUI();
+  navigate('home');
+}
+
+// ===== UI AUTH =====
+function updateAuthUI() {
+  const user = authMock.getUser();
+  const accountBtn = document.querySelector('.account-btn');
+  if (!accountBtn) return;
+  const svgEl = accountBtn.querySelector('svg');
+  const nameEl = document.getElementById('auth-username');
+  if (nameEl) nameEl.remove();
+  const dropdown = accountBtn.querySelector('.account-dropdown');
+
+  if (user) {
+    const firstName = user.name ? user.name.split(' ')[0] : 'Conta';
+    if (svgEl) svgEl.style.display = 'none';
+    const span = document.createElement('span');
+    span.id = 'auth-username';
+    span.style.cssText = 'font-size:13px;font-weight:400;color:var(--gray-700);';
+    span.textContent = firstName;
+    accountBtn.insertBefore(span, dropdown);
+    dropdown.innerHTML = `
+      <div style="padding:10px 20px 6px;font-size:11px;font-weight:300;color:var(--gray-400);letter-spacing:0.5px;">${user.email}</div>
+      <div class="dropdown-divider"></div>
+      <a href="#" onclick="closeAccountDropdown();navigate('account');return false;">Minha Conta</a>
+      <a href="#" onclick="closeAccountDropdown();navigate('account');showAccountSection('orders');return false;">Meus Pedidos</a>
+      <a href="#" onclick="closeAccountDropdown();navigate('account');showAccountSection('favorites');return false;">Favoritos</a>
+      <div class="dropdown-divider"></div>
+      <a href="#" onclick="closeAccountDropdown();doLogout();return false;" style="color:var(--red);">Sair</a>
+    `;
+  } else {
+    if (svgEl) svgEl.style.display = '';
+    dropdown.innerHTML = `
+      <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Entrar</a>
+      <a href="#" onclick="closeAccountDropdown();openAuth('register');return false;">Criar Conta</a>
+      <div class="dropdown-divider"></div>
+      <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Meus Pedidos</a>
+      <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Favoritos</a>
+    `;
+  }
+}
+
+// ===== ÁREA DO CLIENTE =====
+function showAccountSection(section) {
+  ['orders','favorites','profile','addresses'].forEach(s => {
+    const sec = document.getElementById('acc-'+s);
+    const nav = document.getElementById('accNav-'+s);
+    if (sec) sec.classList.remove('active');
+    if (nav) nav.classList.remove('active');
+  });
+  const el = document.getElementById('acc-'+section);
+  const nav = document.getElementById('accNav-'+section);
+  if (el) el.classList.add('active');
+  if (nav) nav.classList.add('active');
+
+  if (section === 'profile') loadProfileForm();
+  if (section === 'addresses') renderAddresses();
+}
+
+function loadProfileForm() {
+  const user = authMock.getUser();
+  if (!user) return;
+  document.getElementById('profile-name').value = user.name || '';
+  document.getElementById('profile-email').value = user.email || '';
+  document.getElementById('profile-phone').value = user.phone || '';
+  document.getElementById('profile-cpf').value = user.cpf || '';
+}
+
+function saveProfile(e) {
+  e.preventDefault();
+  const user = authMock.getUser();
+  if (!user) return;
+  const err = document.getElementById('profile-err');
+  const ok = document.getElementById('profile-ok');
+  err.textContent = ''; ok.textContent = '';
+  const newpw = document.getElementById('profile-newpw').value;
+  const newpw2 = document.getElementById('profile-newpw2').value;
+  if (newpw && newpw !== newpw2) { err.textContent = 'As senhas não coincidem.'; return; }
+  const update = {
+    id: user.id,
+    name: document.getElementById('profile-name').value.trim(),
+    phone: document.getElementById('profile-phone').value.trim(),
+    cpf: document.getElementById('profile-cpf').value.trim(),
+  };
+  if (newpw) update.password = newpw;
+  authMock.updateUser(update);
+  updateAuthUI();
+  ok.textContent = 'Dados salvos com sucesso!';
+  setTimeout(() => { ok.textContent = ''; }, 3000);
+}
+
+function renderAddresses() {
+  const user = authMock.getUser();
+  const list = document.getElementById('addressesList');
+  if (!list) return;
+  const addresses = user ? (user.addresses || []) : [];
+  if (!addresses.length) {
+    list.innerHTML = '<p style="font-size:13px;font-weight:300;color:var(--gray-400);margin-bottom:16px;">Nenhum endereço cadastrado.</p>';
+    return;
+  }
+  list.innerHTML = addresses.map(a => `
+    <div class="acc-address-card">
+      <h4>${a.label || 'Endereço'}</h4>
+      <p>${a.street}${a.number ? ', '+a.number : ''}${a.complement ? ' — '+a.complement : ''}<br>${a.neighborhood ? a.neighborhood+', ' : ''}${a.city}${a.state ? ' — '+a.state : ''}<br>CEP: ${a.cep}</p>
+      <div class="acc-address-actions">
+        <button class="del" onclick="removeAddress(${a.id})">Remover</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeAddress(addrId) {
+  const user = authMock.getUser();
+  if (!user) return;
+  authMock.removeAddress(user.id, addrId);
+  renderAddresses();
+}
+
+function toggleAddAddressForm() {
+  const form = document.getElementById('addAddressForm');
+  if (!form) return;
+  form.classList.toggle('open');
+}
+
+function saveNewAddress(e) {
+  e.preventDefault();
+  const user = authMock.getUser();
+  if (!user) return;
+  const addr = {
+    cep: document.getElementById('adr-cep').value.trim(),
+    street: document.getElementById('adr-street').value.trim(),
+    number: document.getElementById('adr-number').value.trim(),
+    complement: document.getElementById('adr-complement').value.trim(),
+    neighborhood: document.getElementById('adr-neighborhood').value.trim(),
+    city: document.getElementById('adr-city').value.trim(),
+    state: document.getElementById('adr-state').value.trim(),
+    label: 'Endereço ' + ((user.addresses||[]).length + 1)
+  };
+  authMock.addAddress(user.id, addr);
+  toggleAddAddressForm();
+  // limpar campos
+  ['adr-cep','adr-street','adr-number','adr-complement','adr-neighborhood','adr-city','adr-state']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  renderAddresses();
+}
+
+// ===== CEP (ViaCEP) =====
+// Com Supabase, pode usar edge function para proxy do CEP
+async function fetchCEP(prefix) {
+  const cepEl = document.getElementById(prefix+'-cep');
+  if (!cepEl) return;
+  const cep = cepEl.value.replace(/\D/g, '');
+  if (cep.length !== 8) return;
+  try {
+    const res = await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+    const data = await res.json();
+    if (data.erro) { cepEl.style.borderColor = 'var(--red)'; return; }
+    cepEl.style.borderColor = '';
+    const set = (id, val) => { const el = document.getElementById(prefix+'-'+id); if(el && val) el.value = val; };
+    set('street', data.logradouro);
+    set('neighborhood', data.bairro);
+    set('city', data.localidade);
+    set('state', data.uf);
+  } catch(e) { /* silencioso — ViaCEP pode falhar offline */ }
+}
+
+// Máscara CEP
+document.addEventListener('input', function(e) {
+  if (e.target.id && e.target.id.endsWith('-cep')) {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.length > 5) v = v.slice(0,5)+'-'+v.slice(5,8);
+    e.target.value = v;
+  }
+  if (e.target.id && e.target.id.endsWith('-cpf')) {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.length > 3) v = v.slice(0,3)+'.'+v.slice(3);
+    if (v.length > 7) v = v.slice(0,7)+'.'+v.slice(7);
+    if (v.length > 11) v = v.slice(0,11)+'-'+v.slice(11,13);
+    e.target.value = v.slice(0,14);
+  }
+});
+
+// ESC fecha modal e dropdown
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeAuth();
+    closeAccountDropdown();
+  }
+});
+
+// ===== ACCOUNT DROPDOWN (click-toggle) =====
+function toggleAccountDropdown(e) {
+  e.stopPropagation();
+  const dropdown = document.querySelector('.account-dropdown');
+  if (!dropdown) return;
+  const isOpen = dropdown.classList.contains('open');
+  closeAccountDropdown();
+  if (!isOpen) dropdown.classList.add('open');
+}
+function closeAccountDropdown() {
+  const dropdown = document.querySelector('.account-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
+}
+// Fecha ao clicar fora
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.account-btn')) closeAccountDropdown();
+});
+
 function init(){
+  updateAuthUI();
   // Featured products — all 6 products
   document.getElementById('featuredGrid').innerHTML = products.map(renderProductCard).join('');
 
