@@ -830,6 +830,16 @@ ul{list-style:none;}
       <button class="auth-btn" type="submit">Enviar link</button>
       <a class="auth-link" href="#" onclick="switchTab('login');return false;">&#8592; Voltar ao login</a>
     </form>
+
+    <!-- FORM NOVA SENHA (após clicar no link do e-mail) -->
+    <form id="form-newpassword" class="auth-form" style="display:none" onsubmit="doNewPassword(event)">
+      <p class="auth-desc">Digite sua nova senha abaixo.</p>
+      <input class="auth-input" type="password" id="newpass-password" placeholder="Nova senha (mín. 8 caracteres)" required minlength="8" autocomplete="new-password">
+      <input class="auth-input" type="password" id="newpass-password2" placeholder="Confirmar nova senha" required autocomplete="new-password">
+      <div class="auth-err" id="newpass-err"></div>
+      <div class="auth-success" id="newpass-ok"></div>
+      <button class="auth-btn" type="submit">Salvar nova senha</button>
+    </form>
   </div>
 </div>
 
@@ -1336,6 +1346,14 @@ let currentUser = null;
 
 // Listener de auth — mantém currentUser em sincronia com a sessão Supabase
 sb.auth.onAuthStateChange(async (event, session) => {
+  // Usuário chegou pelo link de redefinição de senha
+  if (event === 'PASSWORD_RECOVERY') {
+    switchTab('newpassword');
+    document.getElementById('authModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    return;
+  }
+
   if (session?.user) {
     const uid = session.user.id;
     const [{ data: profile }, { data: addresses }] = await Promise.all([
@@ -1369,7 +1387,7 @@ function closeAuth() {
   document.getElementById('authModal').classList.remove('active');
   document.body.style.overflow = '';
   // limpar erros
-  ['login-err','reg-err','recover-err'].forEach(id => {
+  ['login-err','reg-err','recover-err','newpass-err','newpass-ok'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = '';
   });
@@ -1378,7 +1396,7 @@ function handleAuthOverlayClick(e) {
   if (e.target === document.getElementById('authModal')) closeAuth();
 }
 function switchTab(tab) {
-  const tabs = ['login','register','recover'];
+  const tabs = ['login','register','recover','newpassword'];
   tabs.forEach(t => {
     const form = document.getElementById('form-'+t);
     if (form) form.style.display = 'none';
@@ -1401,6 +1419,10 @@ function switchTab(tab) {
     document.getElementById('form-recover').style.display = 'flex';
     if (authTabs) authTabs.style.display = 'none';
     if (sub) sub.textContent = 'Recuperar senha';
+  } else if (tab === 'newpassword') {
+    document.getElementById('form-newpassword').style.display = 'flex';
+    if (authTabs) authTabs.style.display = 'none';
+    if (sub) sub.textContent = 'Redefinir senha';
   }
 }
 
@@ -1478,6 +1500,28 @@ async function doRecover(e) {
     if (error) throw error;
     ok.textContent = 'Link enviado! Verifique seu e-mail.';
   } catch(ex) { err.textContent = ex.message; }
+}
+
+async function doNewPassword(e) {
+  e.preventDefault();
+  const pw = document.getElementById('newpass-password').value;
+  const pw2 = document.getElementById('newpass-password2').value;
+  const err = document.getElementById('newpass-err');
+  const ok = document.getElementById('newpass-ok');
+  const btn = e.target.querySelector('.auth-btn');
+  err.textContent = ''; ok.textContent = '';
+  if (pw !== pw2) { err.textContent = 'As senhas não conferem.'; return; }
+  if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
+  try {
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) throw error;
+    ok.textContent = 'Senha redefinida com sucesso!';
+    if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
+    setTimeout(() => { closeAuth(); navigate('home'); }, 2000);
+  } catch(ex) {
+    err.textContent = ex.message;
+    if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
+  }
 }
 
 async function doLogout() {
