@@ -1356,13 +1356,29 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   if (session?.user) {
     const uid = session.user.id;
+    const email = session.user.email;
+
+    // Salvar dados pendentes do cadastro (quando havia confirmação de e-mail)
+    const pendingKey = 'sktcg_pending_profile_' + email;
+    const pendingRaw = localStorage.getItem(pendingKey);
+    if (pendingRaw) {
+      try {
+        const pending = JSON.parse(pendingRaw);
+        await sb.from('profiles').upsert({ id: uid, name: pending.name, phone: pending.phone, cpf: pending.cpf });
+        if (pending.address?.cep || pending.address?.street) {
+          await sb.from('addresses').insert({ user_id: uid, ...pending.address, label: 'Principal' });
+        }
+        localStorage.removeItem(pendingKey);
+      } catch(e) { console.warn('Erro ao salvar dados pendentes:', e); }
+    }
+
     const [{ data: profile }, { data: addresses }] = await Promise.all([
       sb.from('profiles').select('*').eq('id', uid).single(),
       sb.from('addresses').select('*').eq('user_id', uid).order('created_at')
     ]);
     currentUser = {
       id: uid,
-      email: session.user.email,
+      email,
       name: profile?.name || '',
       phone: profile?.phone || '',
       cpf: profile?.cpf || '',
@@ -1496,19 +1512,22 @@ async function doRegister(e) {
   try {
     const { data, error } = await sb.auth.signUp({ email, password: pw, options: { data: { name } } });
     if (error) throw error;
-    // Salva dados extras apenas se a sessão já estiver ativa (confirmação de e-mail desativada)
-    // Se confirmação estiver ativa, o trigger cria o perfil automaticamente e dados extras são salvos no primeiro login
     if (data.session) {
+      // Sessão ativa imediatamente (confirmação de e-mail desativada) — salva tudo agora
       const uid = data.user.id;
       await sb.from('profiles').upsert({ id: uid, name, phone, cpf });
       if (address.cep || address.street) {
         await sb.from('addresses').insert({ user_id: uid, ...address, label: 'Principal' });
       }
+    } else {
+      // Confirmação de e-mail necessária — guarda dados temporariamente para salvar no primeiro login
+      const pending = { name, phone, cpf, address };
+      localStorage.setItem('sktcg_pending_profile_' + email, JSON.stringify(pending));
     }
     closeAuth();
     const msg = data.session
       ? 'Conta criada com sucesso! Bem-vindo à SK TCG.'
-      : 'Conta criada! Verifique seu e-mail para confirmar o cadastro.';
+      : 'Conta criada! Verifique seu e-mail para confirmar o cadastro.\nCaso não encontre, cheque a pasta de spam.';
     alert(msg);
   } catch(ex) {
     err.textContent = ex.message.includes('already registered') ? 'E-mail já cadastrado.' : ex.message;
