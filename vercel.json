@@ -13,7 +13,7 @@
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.pokemontcg.io https://www.pokemon.com https://supabase.co https://*.supabase.co; connect-src 'self' https://viacep.com.br https://*.supabase.co; frame-ancestors 'none';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.pokemontcg.io https://www.pokemon.com https://supabase.co https://*.supabase.co; connect-src 'self' https://viacep.com.br https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none';"
         }
       ]
     }
