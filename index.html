@@ -1472,14 +1472,20 @@ async function doRegister(e) {
   try {
     const { data, error } = await sb.auth.signUp({ email, password: pw, options: { data: { name } } });
     if (error) throw error;
-    if (data.user) {
-      await sb.from('profiles').upsert({ id: data.user.id, name, phone, cpf });
+    // Salva dados extras apenas se a sessão já estiver ativa (confirmação de e-mail desativada)
+    // Se confirmação estiver ativa, o trigger cria o perfil automaticamente e dados extras são salvos no primeiro login
+    if (data.session) {
+      const uid = data.user.id;
+      await sb.from('profiles').upsert({ id: uid, name, phone, cpf });
       if (address.cep || address.street) {
-        await sb.from('addresses').insert({ user_id: data.user.id, ...address, label: 'Principal' });
+        await sb.from('addresses').insert({ user_id: uid, ...address, label: 'Principal' });
       }
     }
     closeAuth();
-    alert('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+    const msg = data.session
+      ? 'Conta criada com sucesso! Bem-vindo à SK TCG.'
+      : 'Conta criada! Verifique seu e-mail para confirmar o cadastro.';
+    alert(msg);
   } catch(ex) {
     err.textContent = ex.message.includes('already registered') ? 'E-mail já cadastrado.' : ex.message;
   } finally {
@@ -1516,10 +1522,12 @@ async function doNewPassword(e) {
     const { error } = await sb.auth.updateUser({ password: pw });
     if (error) throw error;
     ok.textContent = 'Senha redefinida com sucesso!';
-    if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
     setTimeout(() => { closeAuth(); navigate('home'); }, 2000);
   } catch(ex) {
-    err.textContent = ex.message;
+    console.error('[doNewPassword] erro:', ex);
+    const msg = ex?.message || ex?.error_description || JSON.stringify(ex);
+    err.textContent = msg ? `Erro: ${msg}` : 'Erro ao redefinir senha. Tente solicitar um novo link de recuperação.';
+  } finally {
     if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
   }
 }
