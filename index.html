@@ -367,6 +367,7 @@ ul{list-style:none;}
 .add-address-form.open{display:block;}
 .account-name-chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:400;color:var(--gray-700);}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -1067,7 +1068,7 @@ function renderProductCard(p){
   const stockClass = qty===0?'out':qty<=5?'low':'';
   const stockText = qty===0?'Esgotado':qty<=5?`Últimas ${qty} unidades`:'Em estoque';
   return `
-    <div class="product-card" onclick="navigate('detail',${p.id})">
+    <div class="product-card" onclick="navigate('detail','${p.id}')">
       <div class="product-img">
         ${badgeHTML}
         ${getProductImage(p)}
@@ -1081,7 +1082,7 @@ function renderProductCard(p){
             ${oldPriceHTML}
             <span class="product-price">R$ ${p.price.toFixed(2).replace('.',',')}</span>
           </div>
-          <button class="add-cart-btn" onclick="event.stopPropagation();addToCart(${p.id});" title="Adicionar ao carrinho">
+          <button class="add-cart-btn" onclick="event.stopPropagation();addToCart('${p.id}');" title="Adicionar ao carrinho">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
@@ -1146,11 +1147,10 @@ function navigate(page, param){
     showDetail(param);
   }
   else if(page==='account'){
-    const user = authMock.getUser();
-    if (!user) { openAuth('login'); return; }
+    if (!currentUser) { openAuth('login'); return; }
     document.getElementById('page-account').classList.add('active');
     const title = document.getElementById('accountPageTitle');
-    if (title) title.textContent = 'Olá, ' + (user.name ? user.name.split(' ')[0] : 'Cliente');
+    if (title) title.textContent = 'Olá, ' + (currentUser.name ? currentUser.name.split(' ')[0] : 'Cliente');
     showAccountSection(param || 'orders');
   }
 }
@@ -1220,7 +1220,7 @@ function showDetail(productId){
       <div class="product-stock ${p.stock==='low'?'low':''}">${p.stock==='in'?'Em estoque':p.stock==='low'?'Últimas unidades':'Esgotado'}</div>
     </div>
     <div class="detail-cta">
-      <button class="btn-primary" onclick="addToCart(${p.id})">Adicionar ao Carrinho</button>
+      <button class="btn-primary" onclick="addToCart('${p.id}')">Adicionar ao Carrinho</button>
       <button class="btn-secondary">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
@@ -1287,7 +1287,7 @@ function renderCart(){
           <span class="cart-item-price">R$ ${(p.price * c.qty).toFixed(2).replace('.',',')}</span>
           <span class="cart-item-qty">Qtd: ${c.qty}</span>
         </div>
-        <span class="cart-item-remove" onclick="removeFromCart(${p.id})">Remover</span>
+        <span class="cart-item-remove" onclick="removeFromCart('${p.id}')">Remover</span>
       </div>
     </div>`;
   }).join('');
@@ -1323,77 +1323,40 @@ document.addEventListener('keydown',function(e){
 // ===== INIT =====
 
 // ============================================================
-// AUTH — Mock com localStorage
+// SUPABASE — Cliente e autenticação real
 // ============================================================
-// PARA CONECTAR AO SUPABASE, substitua os métodos de authMock:
-//   login    → supabase.auth.signInWithPassword({ email, password })
-//   register → supabase.auth.signUp({ email, password }) + INSERT em tabela `users`
-//   logout   → supabase.auth.signOut()
-//   getUser  → supabase.auth.getUser()
-//   update   → supabase.auth.updateUser() + UPDATE em tabela `users`
-// ============================================================
-const authMock = {
-  _users() { return JSON.parse(localStorage.getItem('sk_users') || '[]'); },
-  _saveUsers(u) { localStorage.setItem('sk_users', JSON.stringify(u)); },
-  _session(u) { localStorage.setItem('sk_session', JSON.stringify(u)); },
+const { createClient } = window.supabase;
+const sb = createClient(
+  'https://ytllbniiujsfyvmotvfh.supabase.co',
+  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB'
+);
 
-  login(email, pw) {
-    const user = this._users().find(u => u.email === email && u.password === pw);
-    if (!user) throw new Error('E-mail ou senha incorretos.');
-    this._session(user);
-    return user;
-  },
-  register(data) {
-    const users = this._users();
-    if (users.find(u => u.email === data.email)) throw new Error('E-mail já cadastrado.');
-    const user = { ...data, id: Date.now(), addresses: data.address ? [{ ...data.address, id: Date.now(), label: 'Principal' }] : [] };
-    delete user.address;
-    users.push(user);
-    this._saveUsers(users);
-    this._session(user);
-    return user;
-  },
-  logout() { localStorage.removeItem('sk_session'); },
-  getUser() { const s = localStorage.getItem('sk_session'); return s ? JSON.parse(s) : null; },
-  updateUser(data) {
-    const users = this._users();
-    const idx = users.findIndex(u => u.id === data.id);
-    if (idx !== -1) {
-      users[idx] = { ...users[idx], ...data };
-      this._saveUsers(users);
-      this._session(users[idx]);
-      return users[idx];
-    }
-    return null;
-  },
-  addAddress(userId, addr) {
-    const users = this._users();
-    const idx = users.findIndex(u => u.id === userId);
-    if (idx !== -1) {
-      if (!users[idx].addresses) users[idx].addresses = [];
-      const newAddr = { ...addr, id: Date.now() };
-      users[idx].addresses.push(newAddr);
-      this._saveUsers(users);
-      this._session(users[idx]);
-    }
-  },
-  removeAddress(userId, addrId) {
-    const users = this._users();
-    const idx = users.findIndex(u => u.id === userId);
-    if (idx !== -1) {
-      users[idx].addresses = (users[idx].addresses || []).filter(a => a.id !== addrId);
-      this._saveUsers(users);
-      this._session(users[idx]);
-    }
-  },
-  recoverPassword(email) {
-    // Mock: só verifica se o e-mail existe
-    // Com Supabase: supabase.auth.resetPasswordForEmail(email)
-    const user = this._users().find(u => u.email === email);
-    if (!user) throw new Error('E-mail não encontrado.');
-    return true;
+// Cache do usuário logado (atualizado pelo onAuthStateChange)
+let currentUser = null;
+
+// Listener de auth — mantém currentUser em sincronia com a sessão Supabase
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    const uid = session.user.id;
+    const [{ data: profile }, { data: addresses }] = await Promise.all([
+      sb.from('profiles').select('*').eq('id', uid).single(),
+      sb.from('addresses').select('*').eq('user_id', uid).order('created_at')
+    ]);
+    currentUser = {
+      id: uid,
+      email: session.user.email,
+      name: profile?.name || '',
+      phone: profile?.phone || '',
+      cpf: profile?.cpf || '',
+      addresses: addresses || []
+    };
+  } else {
+    currentUser = null;
   }
-};
+  updateAuthUI();
+  if (document.getElementById('acc-profile')?.classList.contains('active')) loadProfileForm();
+  if (document.getElementById('acc-addresses')?.classList.contains('active')) renderAddresses();
+});
 
 // ===== MODAL AUTH =====
 function openAuth(tab) {
@@ -1442,71 +1405,89 @@ function switchTab(tab) {
 }
 
 // ===== AÇÕES AUTH =====
-function doLogin(e) {
+async function doLogin(e) {
   e.preventDefault();
   const email = document.getElementById('login-email').value.trim();
   const pw = document.getElementById('login-password').value;
   const err = document.getElementById('login-err');
+  const btn = e.target.querySelector('.auth-btn');
   err.textContent = '';
+  if (btn) { btn.textContent = 'Entrando...'; btn.disabled = true; }
   try {
-    authMock.login(email, pw);
+    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (error) throw error;
     closeAuth();
-    updateAuthUI();
-  } catch(ex) { err.textContent = ex.message; }
+  } catch(ex) {
+    err.textContent = (ex.message === 'Invalid login credentials') ? 'E-mail ou senha incorretos.' : ex.message;
+  } finally {
+    if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
+  }
 }
 
-function doRegister(e) {
+async function doRegister(e) {
   e.preventDefault();
   const err = document.getElementById('reg-err');
   err.textContent = '';
-  const pw = document.getElementById('reg-password').value;
+  const pw  = document.getElementById('reg-password').value;
   const pw2 = document.getElementById('reg-password2').value;
   if (pw !== pw2) { err.textContent = 'As senhas não coincidem.'; return; }
-  const data = {
-    name: document.getElementById('reg-name').value.trim(),
-    email: document.getElementById('reg-email').value.trim(),
-    password: pw,
-    phone: document.getElementById('reg-phone').value.trim(),
-    cpf: document.getElementById('reg-cpf').value.trim(),
-    address: {
-      cep: document.getElementById('reg-cep').value.trim(),
-      street: document.getElementById('reg-street').value.trim(),
-      number: document.getElementById('reg-number').value.trim(),
-      complement: document.getElementById('reg-complement').value.trim(),
-      neighborhood: document.getElementById('reg-neighborhood').value.trim(),
-      city: document.getElementById('reg-city').value.trim(),
-      state: document.getElementById('reg-state').value.trim(),
-    }
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const cpf   = document.getElementById('reg-cpf').value.trim();
+  const address = {
+    cep:          document.getElementById('reg-cep').value.trim(),
+    street:       document.getElementById('reg-street').value.trim(),
+    number:       document.getElementById('reg-number').value.trim(),
+    complement:   document.getElementById('reg-complement').value.trim(),
+    neighborhood: document.getElementById('reg-neighborhood').value.trim(),
+    city:         document.getElementById('reg-city').value.trim(),
+    state:        document.getElementById('reg-state').value.trim(),
   };
-  if (!data.name || !data.email) { err.textContent = 'Preencha nome e e-mail.'; return; }
+  if (!name || !email) { err.textContent = 'Preencha nome e e-mail.'; return; }
+  const btn = e.target.querySelector('.auth-btn');
+  if (btn) { btn.textContent = 'Criando conta...'; btn.disabled = true; }
   try {
-    authMock.register(data);
+    const { data, error } = await sb.auth.signUp({ email, password: pw, options: { data: { name } } });
+    if (error) throw error;
+    if (data.user) {
+      await sb.from('profiles').upsert({ id: data.user.id, name, phone, cpf });
+      if (address.cep || address.street) {
+        await sb.from('addresses').insert({ user_id: data.user.id, ...address, label: 'Principal' });
+      }
+    }
     closeAuth();
-    updateAuthUI();
-  } catch(ex) { err.textContent = ex.message; }
+    alert('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+  } catch(ex) {
+    err.textContent = ex.message.includes('already registered') ? 'E-mail já cadastrado.' : ex.message;
+  } finally {
+    if (btn) { btn.textContent = 'Criar Conta'; btn.disabled = false; }
+  }
 }
 
-function doRecover(e) {
+async function doRecover(e) {
   e.preventDefault();
   const email = document.getElementById('recover-email').value.trim();
   const err = document.getElementById('recover-err');
   const ok = document.getElementById('recover-ok');
   err.textContent = ''; ok.textContent = '';
   try {
-    authMock.recoverPassword(email);
-    ok.textContent = 'Link enviado! Verifique seu e-mail. (simulado)';
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    ok.textContent = 'Link enviado! Verifique seu e-mail.';
   } catch(ex) { err.textContent = ex.message; }
 }
 
-function doLogout() {
-  authMock.logout();
-  updateAuthUI();
+async function doLogout() {
+  await sb.auth.signOut();
   navigate('home');
 }
 
 // ===== UI AUTH =====
 function updateAuthUI() {
-  const user = authMock.getUser();
+  const user = currentUser;
   const accountBtn = document.querySelector('.account-btn');
   if (!accountBtn) return;
   const svgEl = accountBtn.querySelector('svg');
@@ -1561,7 +1542,7 @@ function showAccountSection(section) {
 }
 
 function loadProfileForm() {
-  const user = authMock.getUser();
+  const user = currentUser;
   if (!user) return;
   document.getElementById('profile-name').value = user.name || '';
   document.getElementById('profile-email').value = user.email || '';
@@ -1569,31 +1550,35 @@ function loadProfileForm() {
   document.getElementById('profile-cpf').value = user.cpf || '';
 }
 
-function saveProfile(e) {
+async function saveProfile(e) {
   e.preventDefault();
-  const user = authMock.getUser();
+  const user = currentUser;
   if (!user) return;
   const err = document.getElementById('profile-err');
   const ok = document.getElementById('profile-ok');
   err.textContent = ''; ok.textContent = '';
-  const newpw = document.getElementById('profile-newpw').value;
+  const newpw  = document.getElementById('profile-newpw').value;
   const newpw2 = document.getElementById('profile-newpw2').value;
   if (newpw && newpw !== newpw2) { err.textContent = 'As senhas não coincidem.'; return; }
-  const update = {
-    id: user.id,
-    name: document.getElementById('profile-name').value.trim(),
+  const updates = {
+    name:  document.getElementById('profile-name').value.trim(),
     phone: document.getElementById('profile-phone').value.trim(),
-    cpf: document.getElementById('profile-cpf').value.trim(),
+    cpf:   document.getElementById('profile-cpf').value.trim(),
   };
-  if (newpw) update.password = newpw;
-  authMock.updateUser(update);
-  updateAuthUI();
-  ok.textContent = 'Dados salvos com sucesso!';
-  setTimeout(() => { ok.textContent = ''; }, 3000);
+  try {
+    await sb.from('profiles').update(updates).eq('id', user.id);
+    if (newpw) await sb.auth.updateUser({ password: newpw });
+    currentUser = { ...currentUser, ...updates };
+    updateAuthUI();
+    ok.textContent = 'Dados salvos com sucesso!';
+    setTimeout(() => { ok.textContent = ''; }, 3000);
+  } catch(ex) {
+    err.textContent = ex.message;
+  }
 }
 
 function renderAddresses() {
-  const user = authMock.getUser();
+  const user = currentUser;
   const list = document.getElementById('addressesList');
   if (!list) return;
   const addresses = user ? (user.addresses || []) : [];
@@ -1606,16 +1591,17 @@ function renderAddresses() {
       <h4>${a.label || 'Endereço'}</h4>
       <p>${a.street}${a.number ? ', '+a.number : ''}${a.complement ? ' — '+a.complement : ''}<br>${a.neighborhood ? a.neighborhood+', ' : ''}${a.city}${a.state ? ' — '+a.state : ''}<br>CEP: ${a.cep}</p>
       <div class="acc-address-actions">
-        <button class="del" onclick="removeAddress(${a.id})">Remover</button>
+        <button class="del" onclick="removeAddress('${a.id}')">Remover</button>
       </div>
     </div>
   `).join('');
 }
 
-function removeAddress(addrId) {
-  const user = authMock.getUser();
+async function removeAddress(addrId) {
+  const user = currentUser;
   if (!user) return;
-  authMock.removeAddress(user.id, addrId);
+  await sb.from('addresses').delete().eq('id', addrId).eq('user_id', user.id);
+  currentUser.addresses = (currentUser.addresses || []).filter(a => a.id !== addrId);
   renderAddresses();
 }
 
@@ -1625,23 +1611,26 @@ function toggleAddAddressForm() {
   form.classList.toggle('open');
 }
 
-function saveNewAddress(e) {
+async function saveNewAddress(e) {
   e.preventDefault();
-  const user = authMock.getUser();
+  const user = currentUser;
   if (!user) return;
   const addr = {
-    cep: document.getElementById('adr-cep').value.trim(),
-    street: document.getElementById('adr-street').value.trim(),
-    number: document.getElementById('adr-number').value.trim(),
-    complement: document.getElementById('adr-complement').value.trim(),
+    user_id:      user.id,
+    cep:          document.getElementById('adr-cep').value.trim(),
+    street:       document.getElementById('adr-street').value.trim(),
+    number:       document.getElementById('adr-number').value.trim(),
+    complement:   document.getElementById('adr-complement').value.trim(),
     neighborhood: document.getElementById('adr-neighborhood').value.trim(),
-    city: document.getElementById('adr-city').value.trim(),
-    state: document.getElementById('adr-state').value.trim(),
-    label: 'Endereço ' + ((user.addresses||[]).length + 1)
+    city:         document.getElementById('adr-city').value.trim(),
+    state:        document.getElementById('adr-state').value.trim(),
+    label:        'Endereço ' + ((user.addresses||[]).length + 1)
   };
-  authMock.addAddress(user.id, addr);
+  const { data, error } = await sb.from('addresses').insert(addr).select().single();
+  if (!error && data) {
+    currentUser.addresses = [...(currentUser.addresses || []), data];
+  }
   toggleAddAddressForm();
-  // limpar campos
   ['adr-cep','adr-street','adr-number','adr-complement','adr-neighborhood','adr-city','adr-state']
     .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   renderAddresses();
@@ -1709,24 +1698,22 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.account-btn')) closeAccountDropdown();
 });
 
-function init(){
-  updateAuthUI();
-  // Featured products — all 6 products
+function renderHome() {
   document.getElementById('featuredGrid').innerHTML = products.map(renderProductCard).join('');
-
-  // Home editions
   document.getElementById('editionsGrid').innerHTML = editions.map(e=>renderEditionCard(e,false)).join('');
 
-  // Hero product visuals — Ascended Heroes theme
   const ahColor = editionColors['Ascended Heroes'];
-  const heroETB = document.getElementById('heroETB');
-  const heroBox = document.getElementById('heroBox');
+  const heroETB  = document.getElementById('heroETB');
+  const heroBox  = document.getElementById('heroBox');
   const heroPack = document.getElementById('heroPack');
+  const srcAhETB  = products.find(p => p.ptype==='etb' && p.edition==='Ascended Heroes')?.img || IMG.ahETB;
+  const srcPoETB  = products.find(p => p.ptype==='etb' && p.edition==='Perfect Order')?.img  || IMG.poETB;
+  const srcBlister= products.find(p => p.category==='booster-packs')?.img || IMG.poBlister;
+
   if(heroETB){
     heroETB.innerHTML = '';
     const img = document.createElement('img');
-    img.src = IMG.ahETB;
-    img.alt = 'ETB Ascended Heroes';
+    img.src = srcAhETB; img.alt = 'ETB Ascended Heroes';
     img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
     img.onerror = function(){ this.parentElement.innerHTML = makeSVG('etb', ahColor, 'Ascended Heroes'); };
     heroETB.appendChild(img);
@@ -1734,8 +1721,7 @@ function init(){
   if(heroBox){
     heroBox.innerHTML = '';
     const img = document.createElement('img');
-    img.src = IMG.poETB;
-    img.alt = 'ETB Perfect Order';
+    img.src = srcPoETB; img.alt = 'ETB Perfect Order';
     img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
     img.onerror = function(){ this.parentElement.innerHTML = makeSVG('etb', editionColors['Perfect Order'], 'Perfect Order'); };
     heroBox.appendChild(img);
@@ -1743,12 +1729,40 @@ function init(){
   if(heroPack){
     heroPack.innerHTML = '';
     const img = document.createElement('img');
-    img.src = IMG.poBlister;
-    img.alt = '3-Pack Blister Perfect Order';
+    img.src = srcBlister; img.alt = '3-Pack Blister Perfect Order';
     img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
     img.onerror = function(){ this.parentElement.innerHTML = makeSVG('pack', editionColors['Perfect Order'], 'Perfect Order'); };
     heroPack.appendChild(img);
   }
+}
+
+async function init(){
+  updateAuthUI();
+
+  // Carregar produtos do Supabase; fallback para hardcoded se tabela vazia ou offline
+  try {
+    const { data, error } = await sb.from('products').select('*').eq('active', true).order('created_at');
+    if (!error && data && data.length > 0) {
+      products.length = 0;
+      data.forEach(p => products.push({
+        id:       p.id,
+        name:     p.name,
+        edition:  p.edition  || '',
+        category: p.category || 'all',
+        ptype:    p.ptype    || 'accessory',
+        price:    parseFloat(p.price),
+        oldPrice: p.old_price ? parseFloat(p.old_price) : null,
+        badge:    p.badge    || null,
+        stock:    p.stock    || 'in',
+        qty:      null,
+        desc:     p.description || '',
+        img:      p.img_url  || null,
+        specs:    p.specs    || {}
+      }));
+    }
+  } catch(e) { /* usa produtos hardcoded como fallback */ }
+
+  renderHome();
 }
 init();
 </script>
