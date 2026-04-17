@@ -1380,6 +1380,14 @@ sb.auth.onAuthStateChange(async (event, session) => {
 function openAuth(tab) {
   tab = tab || 'login';
   switchTab(tab);
+  // Resetar estado de todos os botões (caso tenha ficado travado de tentativa anterior)
+  document.querySelectorAll('#authModal .auth-btn').forEach(btn => {
+    btn.disabled = false;
+    if (btn.closest('#form-login'))    btn.textContent = 'Entrar';
+    if (btn.closest('#form-register')) btn.textContent = 'Criar Conta';
+    if (btn.closest('#form-recover'))  btn.textContent = 'Enviar link';
+    if (btn.closest('#form-newpassword')) btn.textContent = 'Salvar nova senha';
+  });
   document.getElementById('authModal').classList.add('active');
   document.body.style.overflow = 'hidden';
 }
@@ -1436,13 +1444,27 @@ async function doLogin(e) {
   err.textContent = '';
   if (btn) { btn.textContent = 'Entrando...'; btn.disabled = true; }
   try {
-    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 15000)
+    );
+    const { error } = await Promise.race([
+      sb.auth.signInWithPassword({ email, password: pw }),
+      timeout
+    ]);
     if (error) throw error;
     closeAuth();
   } catch(ex) {
     console.error('[doLogin] erro:', ex);
     const msg = ex?.message || ex?.error_description || JSON.stringify(ex);
-    err.textContent = (msg === 'Invalid login credentials') ? 'E-mail ou senha incorretos.' : (msg || 'Erro ao conectar. Tente novamente.');
+    if (msg === 'timeout') {
+      err.textContent = 'Tempo limite excedido. Verifique sua conexão e tente novamente.';
+    } else if (msg === 'Invalid login credentials') {
+      err.textContent = 'E-mail ou senha incorretos.';
+    } else if (msg?.includes('Email not confirmed')) {
+      err.textContent = 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+    } else {
+      err.textContent = msg || 'Erro ao conectar. Tente novamente.';
+    }
   } finally {
     if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
   }
