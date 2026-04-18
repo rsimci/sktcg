@@ -1427,7 +1427,7 @@ if (_confirmingEmail) {
       showToast('E-mail confirmado!', 'Agora faça login para acessar sua conta.', 'success', 8000);
       openAuth('login');
     }
-  }, 3000); // 3s: suficiente para Supabase processar em mobile, rápido o bastante para não parecer travado
+  }, 6000); // 6s: dá tempo para troca PKCE completar no mesmo browser (2–5s), antes de cair no fallback manual
 }
 
 // Listener de auth — mantém currentUser em sincronia com a sessão Supabase
@@ -1496,6 +1496,14 @@ sb.auth.onAuthStateChange(async (event, session) => {
     // Se o usuário fez login enquanto estava na página intermediária, volta para a home
     if (document.getElementById('page-confirm-email')?.classList.contains('active')) {
       navigate('home');
+    }
+
+    // Se o modal de auth estava aberto (ex: fallback timer abriu login enquanto a
+    // troca PKCE ainda processava), fecha o modal — o usuário já está autenticado.
+    // Isso também cobre a sincronização entre abas: Tab B confirma → Tab A atualiza.
+    if (document.getElementById('authModal')?.classList.contains('active')) {
+      hideLoading();
+      closeAuth();
     }
   } else {
     currentUser = null;
