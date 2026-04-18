@@ -82,6 +82,22 @@ ul{list-style:none;}
 .product-img .img-placeholder span{font-size:10px;font-weight:400;color:var(--gray-300);letter-spacing:2px;text-transform:uppercase;}
 .detail-image img{width:100%;height:100%;object-fit:contain;padding:20px;}
 
+/* ===== TOAST ===== */
+#sk-toast-container{position:fixed;top:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.sk-toast{background:var(--navy);color:var(--white);padding:14px 20px;border-radius:10px;font-size:13px;font-weight:300;line-height:1.5;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;align-items:flex-start;gap:12px;pointer-events:all;transform:translateX(120%);opacity:0;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1),opacity 0.35s ease;}
+.sk-toast.show{transform:translateX(0);opacity:1;}
+.sk-toast.hide{transform:translateX(120%);opacity:0;}
+.sk-toast-icon{width:18px;height:18px;flex-shrink:0;margin-top:1px;}
+.sk-toast.success .sk-toast-icon{color:var(--purple);}
+.sk-toast.error{border-left:3px solid var(--red);}
+.sk-toast.error .sk-toast-icon{color:var(--red);}
+.sk-toast.info .sk-toast-icon{color:rgba(255,255,255,0.5);}
+.sk-toast-body{flex:1;}
+.sk-toast-title{font-weight:500;font-size:13px;margin-bottom:2px;}
+.sk-toast-msg{font-size:12px;color:rgba(255,255,255,0.65);line-height:1.5;}
+.sk-toast-close{background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:16px;padding:0;line-height:1;margin-left:4px;flex-shrink:0;transition:color 0.2s;}
+.sk-toast-close:hover{color:rgba(255,255,255,0.7);}
+
 /* ===== SEARCH OVERLAY ===== */
 .search-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.6);z-index:2000;display:none;align-items:flex-start;justify-content:center;padding-top:120px;backdrop-filter:blur(4px);}
 .search-overlay.active{display:flex;}
@@ -798,23 +814,23 @@ ul{list-style:none;}
       <input class="auth-input" type="email" id="reg-email" placeholder="E-mail" required autocomplete="email">
       <input class="auth-input" type="password" id="reg-password" placeholder="Senha (mín. 8 caracteres)" required minlength="8" autocomplete="new-password">
       <input class="auth-input" type="password" id="reg-password2" placeholder="Confirmar senha" required autocomplete="new-password">
-      <input class="auth-input" type="tel" id="reg-phone" placeholder="Telefone / WhatsApp" autocomplete="tel">
-      <input class="auth-input" type="text" id="reg-cpf" placeholder="CPF (000.000.000-00)">
+      <input class="auth-input" type="tel" id="reg-phone" placeholder="Telefone / WhatsApp" required autocomplete="tel">
+      <input class="auth-input" type="text" id="reg-cpf" placeholder="CPF (000.000.000-00)" required>
       <div class="auth-divider"></div>
       <div class="auth-section-title">Endereço de Entrega</div>
       <div class="auth-row">
-        <input class="auth-input" type="text" id="reg-cep" placeholder="CEP" style="flex:1" maxlength="9">
+        <input class="auth-input" type="text" id="reg-cep" placeholder="CEP" required style="flex:1" maxlength="9">
         <button class="auth-cep-btn" type="button" onclick="fetchCEP('reg')">Buscar</button>
       </div>
-      <input class="auth-input" type="text" id="reg-street" placeholder="Rua / Logradouro">
+      <input class="auth-input" type="text" id="reg-street" placeholder="Rua / Logradouro" required>
       <div class="auth-row">
-        <input class="auth-input" type="text" id="reg-number" placeholder="Número" style="flex:0 0 90px">
+        <input class="auth-input" type="text" id="reg-number" placeholder="Número" required style="flex:0 0 90px">
         <input class="auth-input" type="text" id="reg-complement" placeholder="Complemento" style="flex:1">
       </div>
-      <input class="auth-input" type="text" id="reg-neighborhood" placeholder="Bairro">
+      <input class="auth-input" type="text" id="reg-neighborhood" placeholder="Bairro" required>
       <div class="auth-row">
-        <input class="auth-input" type="text" id="reg-city" placeholder="Cidade" style="flex:1">
-        <input class="auth-input" type="text" id="reg-state" placeholder="UF" style="flex:0 0 64px" maxlength="2">
+        <input class="auth-input" type="text" id="reg-city" placeholder="Cidade" required style="flex:1">
+        <input class="auth-input" type="text" id="reg-state" placeholder="UF" required style="flex:0 0 64px" maxlength="2">
       </div>
       <div class="auth-err" id="reg-err"></div>
       <button class="auth-btn" type="submit">Criar Conta</button>
@@ -1369,7 +1385,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
           await sb.from('addresses').insert({ user_id: uid, ...pending.address, label: 'Principal' });
         }
         localStorage.removeItem(pendingKey);
-      } catch(e) { console.warn('Erro ao salvar dados pendentes:', e); }
+      } catch(e) {
+        console.warn('Erro ao salvar dados pendentes:', e);
+        // Mantém no localStorage para tentar novamente no próximo login
+      }
     }
 
     const [{ data: profile }, { data: addresses }] = await Promise.all([
@@ -1391,6 +1410,32 @@ sb.auth.onAuthStateChange(async (event, session) => {
   if (document.getElementById('acc-profile')?.classList.contains('active')) loadProfileForm();
   if (document.getElementById('acc-addresses')?.classList.contains('active')) renderAddresses();
 });
+
+// ===== TOAST =====
+function showToast(title, msg, type = 'success', duration = 5000) {
+  const container = document.getElementById('sk-toast-container');
+  const icons = {
+    success: `<svg class="sk-toast-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`,
+    error:   `<svg class="sk-toast-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`,
+    info:    `<svg class="sk-toast-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>`,
+  };
+  const toast = document.createElement('div');
+  toast.className = `sk-toast ${type}`;
+  toast.innerHTML = `
+    ${icons[type] || icons.info}
+    <div class="sk-toast-body">
+      <div class="sk-toast-title">${title}</div>
+      ${msg ? `<div class="sk-toast-msg">${msg}</div>` : ''}
+    </div>
+    <button class="sk-toast-close" onclick="this.closest('.sk-toast').remove()">&#x2715;</button>
+  `;
+  container.appendChild(toast);
+  requestAnimationFrame(() => { requestAnimationFrame(() => { toast.classList.add('show'); }); });
+  setTimeout(() => {
+    toast.classList.add('hide');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }, duration);
+}
 
 // ===== MODAL AUTH =====
 function openAuth(tab) {
@@ -1506,7 +1551,27 @@ async function doRegister(e) {
     city:         document.getElementById('reg-city').value.trim(),
     state:        document.getElementById('reg-state').value.trim(),
   };
-  if (!name || !email) { err.textContent = 'Preencha nome e e-mail.'; return; }
+  // Validações JS (backup além do required do HTML)
+  if (!name)  { err.textContent = 'Preencha seu nome completo.'; return; }
+  if (!email) { err.textContent = 'Preencha seu e-mail.'; return; }
+  if (pw.length < 8) { err.textContent = 'A senha deve ter no mínimo 8 caracteres.'; return; }
+
+  // Telefone: mínimo 10 dígitos (com DDD)
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length < 10) { err.textContent = 'Preencha um telefone válido com DDD.'; return; }
+
+  // CPF: deve ter 11 dígitos
+  const cpfDigits = cpf.replace(/\D/g, '');
+  if (cpfDigits.length !== 11) { err.textContent = 'CPF inválido. Digite os 11 dígitos.'; return; }
+
+  // Endereço: campos obrigatórios
+  if (!address.cep || address.cep.replace(/\D/g,'').length < 8) { err.textContent = 'Preencha um CEP válido.'; return; }
+  if (!address.street)       { err.textContent = 'Preencha o logradouro.'; return; }
+  if (!address.number)       { err.textContent = 'Preencha o número.'; return; }
+  if (!address.neighborhood) { err.textContent = 'Preencha o bairro.'; return; }
+  if (!address.city)         { err.textContent = 'Preencha a cidade.'; return; }
+  if (!address.state || address.state.length !== 2) { err.textContent = 'Preencha a UF com 2 letras (ex: SP).'; return; }
+
   const btn = e.target.querySelector('.auth-btn');
   if (btn) { btn.textContent = 'Criando conta...'; btn.disabled = true; }
   try {
@@ -1516,21 +1581,25 @@ async function doRegister(e) {
       // Sessão ativa imediatamente (confirmação de e-mail desativada) — salva tudo agora
       const uid = data.user.id;
       await sb.from('profiles').upsert({ id: uid, name, phone, cpf });
-      if (address.cep || address.street) {
-        await sb.from('addresses').insert({ user_id: uid, ...address, label: 'Principal' });
-      }
+      await sb.from('addresses').insert({ user_id: uid, ...address, label: 'Principal' });
     } else {
       // Confirmação de e-mail necessária — guarda dados temporariamente para salvar no primeiro login
       const pending = { name, phone, cpf, address };
       localStorage.setItem('sktcg_pending_profile_' + email, JSON.stringify(pending));
     }
     closeAuth();
-    const msg = data.session
-      ? 'Conta criada com sucesso! Bem-vindo à SK TCG.'
-      : 'Conta criada! Verifique seu e-mail para confirmar o cadastro.\nCaso não encontre, cheque a pasta de spam.';
-    alert(msg);
+    if (data.session) {
+      showToast('Bem-vindo à SK TCG!', 'Sua conta foi criada com sucesso.', 'success');
+    } else {
+      showToast('Verifique seu e-mail', 'Enviamos um link de confirmação. Caso não encontre, cheque a pasta de spam.', 'info', 8000);
+    }
   } catch(ex) {
-    err.textContent = ex.message.includes('already registered') ? 'E-mail já cadastrado.' : ex.message;
+    const msg = ex?.message || '';
+    if (msg.includes('already registered') || msg.includes('User already registered') || msg.includes('email address is already registered')) {
+      err.textContent = 'Este e-mail já está cadastrado. Tente fazer login.';
+    } else {
+      err.textContent = msg || 'Erro ao criar conta. Tente novamente.';
+    }
   } finally {
     if (btn) { btn.textContent = 'Criar Conta'; btn.disabled = false; }
   }
@@ -1547,7 +1616,8 @@ async function doRecover(e) {
       redirectTo: window.location.origin + window.location.pathname
     });
     if (error) throw error;
-    ok.textContent = 'Link enviado! Verifique seu e-mail.';
+    closeAuth();
+    showToast('Link enviado!', 'Verifique sua caixa de entrada. Caso não encontre, cheque a pasta de spam.', 'success', 7000);
   } catch(ex) { err.textContent = ex.message; }
 }
 
@@ -1559,13 +1629,15 @@ async function doNewPassword(e) {
   const ok = document.getElementById('newpass-ok');
   const btn = e.target.querySelector('.auth-btn');
   err.textContent = ''; ok.textContent = '';
+  if (pw.length < 8) { err.textContent = 'A senha deve ter no mínimo 8 caracteres.'; return; }
   if (pw !== pw2) { err.textContent = 'As senhas não conferem.'; return; }
   if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
   try {
     const { error } = await sb.auth.updateUser({ password: pw });
     if (error) throw error;
-    ok.textContent = 'Senha redefinida com sucesso!';
-    setTimeout(() => { closeAuth(); navigate('home'); }, 2000);
+    closeAuth();
+    showToast('Senha redefinida!', 'Sua nova senha foi salva com sucesso.', 'success');
+    setTimeout(() => navigate('home'), 1000);
   } catch(ex) {
     console.error('[doNewPassword] erro:', ex);
     const msg = ex?.message || ex?.error_description || JSON.stringify(ex);
@@ -1665,8 +1737,7 @@ async function saveProfile(e) {
     if (newpw) await sb.auth.updateUser({ password: newpw });
     currentUser = { ...currentUser, ...updates };
     updateAuthUI();
-    ok.textContent = 'Dados salvos com sucesso!';
-    setTimeout(() => { ok.textContent = ''; }, 3000);
+    showToast('Dados salvos!', 'Suas informações foram atualizadas.', 'success');
   } catch(ex) {
     err.textContent = ex.message;
   }
@@ -1861,6 +1932,9 @@ async function init(){
 }
 init();
 </script>
+
+<!-- TOAST CONTAINER -->
+<div id="sk-toast-container"></div>
 
 </body>
 </html>
