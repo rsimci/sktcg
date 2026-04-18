@@ -1387,9 +1387,10 @@ const sb = createClient(
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
-// Detecta se o usuário chegou via link de e-mail (confirmação ou recuperação de senha)
-// Com implicit flow, o token vem no hash da URL: #access_token=xxx&type=signup|recovery
-if (window.location.hash.includes('type=signup')) {
+// Detecta se o usuário chegou via link de confirmação de e-mail
+// Com implicit flow, o token vem no hash: #access_token=xxx&type=signup
+const _confirmingEmail = window.location.hash.includes('type=signup');
+if (_confirmingEmail) {
   sessionStorage.setItem('sktcg_email_just_confirmed', '1');
 }
 
@@ -1441,15 +1442,17 @@ sb.auth.onAuthStateChange(async (event, session) => {
       addresses: addresses || []
     };
 
-    // Exibe boas-vindas ao confirmar e-mail (detectado pelo hash da URL ou sessionStorage)
-    const justConfirmed = sessionStorage.getItem('sktcg_email_just_confirmed');
-    if (justConfirmed) {
+    // Exibe boas-vindas ao confirmar e-mail (detectado pelo hash da URL)
+    if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
       sessionStorage.removeItem('sktcg_email_just_confirmed');
       sessionStorage.removeItem('sktcg_confirm_email');
-      setTimeout(() => {
-        navigate('home');
-        showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
-      }, 300);
+      navigate('home');
+      showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
+    }
+
+    // Se o usuário fez login enquanto estava na página intermediária, volta para a home
+    if (document.getElementById('page-confirm-email')?.classList.contains('active')) {
+      navigate('home');
     }
   } else {
     currentUser = null;
@@ -1996,6 +1999,11 @@ function renderHome() {
 
 async function init(){
   updateAuthUI();
+
+  // Feedback imediato quando o usuário chega pelo link de confirmação de e-mail
+  if (_confirmingEmail) {
+    showToast('Confirmando seu e-mail…', 'Aguarde um instante.', 'info', 12000);
+  }
 
   // Carregar produtos do Supabase; fallback para hardcoded se tabela vazia ou offline
   try {
