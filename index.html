@@ -1708,8 +1708,11 @@ async function resendConfirmEmail() {
 }
 
 async function doLogout() {
-  await sb.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
   navigate('home');
+  sb.auth.signOut(); // não precisa await — UI já foi atualizada
+  showToast('Até logo!', 'Você saiu da sua conta com sucesso.', 'info', 4000);
 }
 
 // ===== UI AUTH =====
