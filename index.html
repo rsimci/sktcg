@@ -1386,13 +1386,38 @@ const sb = createClient(
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
-// Detecta se o usuário chegou via link de confirmação de e-mail
-// PKCE: token vem como query param (?token_hash=xxx&type=signup)
-// Não removemos a URL — o Supabase precisa ler os parâmetros para processar o token
-const _confirmingEmail = window.location.search.includes('type=signup') ||
-                         window.location.hash.includes('type=signup');
+// Detecta se o usuário chegou via link de confirmação de e-mail.
+// Supabase pode redirecionar de formas diferentes dependendo do fluxo:
+//   - PKCE (mesmo browser):  ?code=xxx  → troca automática pelo client JS
+//   - PKCE (outro browser):  ?code=xxx  → troca FALHA (sem code_verifier)  ← problema mobile
+//   - Token hash:            ?token_hash=xxx&type=signup → funciona cross-browser
+//   - Implicit hash:         #access_token=xxx&type=signup
+// Detectamos todas as variantes para disparar o feedback adequado.
+const _urlSearch = new URLSearchParams(window.location.search);
+const _urlHash   = new URLSearchParams(window.location.hash.slice(1));
+
+const _confirmingEmail = _urlSearch.get('type') === 'signup' ||
+                         _urlHash.get('type') === 'signup'   ||
+                         (!!_urlSearch.get('token_hash') && !!_urlSearch.get('type')) ||
+                         !!_urlSearch.get('code');  // PKCE code de redirect de confirmação
+
 if (_confirmingEmail) {
   sessionStorage.setItem('sktcg_email_just_confirmed', '1');
+}
+
+// Fallback cross-browser: se o Supabase JS não conseguir autenticar em 6s
+// (ex: PKCE cross-device sem code_verifier), avisamos e pedimos login manual.
+let _confirmFallbackTimer = null;
+if (_confirmingEmail) {
+  _confirmFallbackTimer = setTimeout(() => {
+    if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
+      sessionStorage.removeItem('sktcg_email_just_confirmed');
+      sessionStorage.removeItem('sktcg_confirm_email');
+      history.replaceState({}, '', window.location.pathname);
+      showToast('E-mail confirmado!', 'Agora faça login para acessar sua conta.', 'success', 8000);
+      openAuth('login');
+    }
+  }, 3000); // 3s: suficiente para Supabase processar em mobile, rápido o bastante para não parecer travado
 }
 
 // Listener de auth — mantém currentUser em sincronia com a sessão Supabase
@@ -1443,10 +1468,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
       addresses: addresses || []
     };
 
-    // Exibe boas-vindas ao confirmar e-mail (detectado pelo hash da URL)
+    // Exibe boas-vindas ao confirmar e-mail (detectado pelos params da URL)
     if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
+      if (_confirmFallbackTimer) clearTimeout(_confirmFallbackTimer); // cancela fallback manual
       sessionStorage.removeItem('sktcg_email_just_confirmed');
       sessionStorage.removeItem('sktcg_confirm_email');
+      history.replaceState({}, '', window.location.pathname); // limpa ?code= / ?token_hash= da URL
       navigate('home');
       showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
     }
@@ -1566,7 +1593,7 @@ async function doLogin(e) {
   if (btn) { btn.textContent = 'Entrando...'; btn.disabled = true; }
   try {
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 15000)
+      setTimeout(() => reject(new Error('timeout')), 8000)
     );
     const { error } = await Promise.race([
       sb.auth.signInWithPassword({ email, password: pw }),
@@ -1678,7 +1705,7 @@ async function doRecover(e) {
     });
     if (error) throw error;
     closeAuth();
-    showToast('Link enviado!', 'Verifique sua caixa de entrada. Caso não encontre, cheque a pasta de spam.', 'success', 7000);
+    showToast('Link enviado!', 'Verifique sua caixa de entrada. Caso não encontre, cheque a pasta de spam.', 'success', 5000);
   } catch(ex) { err.textContent = ex.message; }
 }
 
@@ -1695,7 +1722,7 @@ async function doNewPassword(e) {
   if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
   try {
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 15000)
+      setTimeout(() => reject(new Error('timeout')), 8000)
     );
     const { error } = await Promise.race([
       sb.auth.updateUser({ password: pw }),
@@ -2003,7 +2030,7 @@ async function init(){
 
   // Feedback imediato quando o usuário chega pelo link de confirmação de e-mail
   if (_confirmingEmail) {
-    showToast('Confirmando seu e-mail…', 'Aguarde um instante.', 'info', 12000);
+    showToast('Verificando seu e-mail…', 'Aguarde um instante.', 'info', 2500);
   }
 
   // Carregar produtos do Supabase; fallback para hardcoded se tabela vazia ou offline
