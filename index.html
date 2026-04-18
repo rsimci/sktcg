@@ -1449,6 +1449,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     // O ?code= do link de recuperação dispara _confirmingEmail incorretamente — cancela o timer
     if (_confirmFallbackTimer) clearTimeout(_confirmFallbackTimer);
     sessionStorage.removeItem('sktcg_email_just_confirmed');
+    history.replaceState({}, '', window.location.pathname); // evita reuso do ?code= no refresh
     hideLoading();
     switchTab('newpassword');
     document.getElementById('authModal').classList.add('active');
@@ -1504,9 +1505,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
       navigate('home');
       showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
     } else {
-      // SIGNED_IN sem flag: pode ser login manual, login via outra aba, ou
-      // sessão temporária de recuperação de senha (PASSWORD_RECOVERY virá a seguir).
-      // Apenas esconde o overlay caso esteja visível — o PASSWORD_RECOVERY abrirá o modal correto.
+      // SIGNED_IN sem flag: login manual, login via outra aba, ou sessão de recuperação.
+      // Limpa ?code= da URL para evitar que um refresh tente reusar o código (já consumido),
+      // o que derrubaria a sessão. PASSWORD_RECOVERY virá a seguir se for fluxo de recuperação.
+      if (_hasAuthCode) history.replaceState({}, '', window.location.pathname);
       hideLoading();
     }
 
