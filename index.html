@@ -1380,16 +1380,17 @@ document.addEventListener('keydown',function(e){
 const { createClient } = window.supabase;
 const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
-  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB',
-  { auth: { flowType: 'implicit' } }
+  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB'
 );
 
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
 // Detecta se o usuário chegou via link de confirmação de e-mail
-// Com implicit flow, o token vem no hash: #access_token=xxx&type=signup
-const _confirmingEmail = window.location.hash.includes('type=signup');
+// PKCE: token vem como query param (?token_hash=xxx&type=signup)
+// Não removemos a URL — o Supabase precisa ler os parâmetros para processar o token
+const _confirmingEmail = window.location.search.includes('type=signup') ||
+                         window.location.hash.includes('type=signup');
 if (_confirmingEmail) {
   sessionStorage.setItem('sktcg_email_just_confirmed', '1');
 }
