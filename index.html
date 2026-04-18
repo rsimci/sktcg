@@ -1380,19 +1380,17 @@ document.addEventListener('keydown',function(e){
 const { createClient } = window.supabase;
 const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
-  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB'
+  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB',
+  { auth: { flowType: 'implicit' } }
 );
 
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
-// Detecta se o usuário chegou via link de confirmação de e-mail
-// Suporta tanto hash (#type=signup — fluxo implícito) quanto query (?type=signup — fluxo PKCE)
-const _authHash = window.location.hash;
-const _authSearch = window.location.search;
-if (_authHash.includes('type=signup') || _authSearch.includes('type=signup') || _authSearch.includes('type=email')) {
+// Detecta se o usuário chegou via link de e-mail (confirmação ou recuperação de senha)
+// Com implicit flow, o token vem no hash da URL: #access_token=xxx&type=signup|recovery
+if (window.location.hash.includes('type=signup')) {
   sessionStorage.setItem('sktcg_email_just_confirmed', '1');
-  history.replaceState(null, '', window.location.pathname);
 }
 
 // Listener de auth — mantém currentUser em sincronia com a sessão Supabase
@@ -1430,17 +1428,22 @@ sb.auth.onAuthStateChange(async (event, session) => {
       sb.from('profiles').select('*').eq('id', uid).single(),
       sb.from('addresses').select('*').eq('user_id', uid).order('created_at')
     ]);
+
+    // Nome: prioridade ao perfil salvo, depois ao metadata do cadastro, depois ao email
+    const resolvedName = profile?.name || session.user.user_metadata?.name || '';
+
     currentUser = {
       id: uid,
       email,
-      name: profile?.name || '',
+      name: resolvedName,
       phone: profile?.phone || '',
       cpf: profile?.cpf || '',
       addresses: addresses || []
     };
 
-    // Exibe boas-vindas se o usuário acabou de confirmar o e-mail
-    if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
+    // Exibe boas-vindas ao confirmar e-mail (detectado pelo hash da URL ou sessionStorage)
+    const justConfirmed = sessionStorage.getItem('sktcg_email_just_confirmed');
+    if (justConfirmed) {
       sessionStorage.removeItem('sktcg_email_just_confirmed');
       sessionStorage.removeItem('sktcg_confirm_email');
       setTimeout(() => {
@@ -1687,7 +1690,13 @@ async function doNewPassword(e) {
   if (pw !== pw2) { err.textContent = 'As senhas não conferem.'; return; }
   if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
   try {
-    const { error } = await sb.auth.updateUser({ password: pw });
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 15000)
+    );
+    const { error } = await Promise.race([
+      sb.auth.updateUser({ password: pw }),
+      timeout
+    ]);
     if (error) throw error;
     if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
     closeAuth();
@@ -1695,8 +1704,12 @@ async function doNewPassword(e) {
     setTimeout(() => navigate('home'), 1000);
   } catch(ex) {
     console.error('[doNewPassword] erro:', ex);
-    const msg = ex?.message || ex?.error_description || JSON.stringify(ex);
-    err.textContent = msg ? `Erro: ${msg}` : 'Erro ao redefinir senha. Tente solicitar um novo link de recuperação.';
+    const msg = ex?.message || ex?.error_description || '';
+    if (msg === 'timeout') {
+      err.textContent = 'Tempo limite excedido. Solicite um novo link de recuperação e tente novamente.';
+    } else {
+      err.textContent = msg || 'Erro ao redefinir senha. Solicite um novo link de recuperação.';
+    }
   } finally {
     if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
   }
