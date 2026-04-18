@@ -784,6 +784,25 @@ ul{list-style:none;}
   </section>
 </div>
 
+<!-- PÁGINA: CONFIRMAR E-MAIL -->
+<div class="page" id="page-confirm-email">
+  <div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:60px 24px;">
+    <div style="max-width:480px;width:100%;text-align:center;">
+      <div style="width:72px;height:72px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <p style="font-size:11px;font-weight:400;letter-spacing:3px;text-transform:uppercase;color:var(--purple);margin-bottom:12px;">Quase lá</p>
+      <h1 style="font-size:26px;font-weight:300;color:var(--navy);margin-bottom:16px;letter-spacing:1px;">Confirme seu e-mail</h1>
+      <p style="font-size:14px;font-weight:300;color:var(--gray-500);line-height:1.7;margin-bottom:8px;">Enviamos um link de confirmação para:</p>
+      <p style="font-size:14px;font-weight:500;color:var(--navy);margin-bottom:24px;" id="confirm-email-display">—</p>
+      <p style="font-size:13px;font-weight:300;color:var(--gray-500);line-height:1.7;margin-bottom:32px;">Clique no link do e-mail para ativar sua conta e acessar o site.<br><span style="color:var(--gray-400);font-size:12px;">Não encontrou? Verifique a pasta de spam.</span></p>
+      <button onclick="resendConfirmEmail()" id="btn-resend" style="background:var(--navy);color:var(--white);border:none;border-radius:8px;padding:13px 28px;font-size:13px;font-weight:400;cursor:pointer;letter-spacing:0.5px;margin-bottom:16px;transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Reenviar e-mail</button>
+      <br>
+      <a href="#" onclick="navigate('home');return false;" style="font-size:12px;font-weight:300;color:var(--gray-400);text-decoration:underline;">Voltar para a loja</a>
+    </div>
+  </div>
+</div>
+
 <!-- AUTH MODAL -->
 <div class="auth-modal" id="authModal" onclick="handleAuthOverlayClick(event)">
   <div class="auth-modal-box">
@@ -1172,6 +1191,11 @@ function navigate(page, param){
   else if(page==='detail'){
     showDetail(param);
   }
+  else if(page==='confirm-email'){
+    document.getElementById('page-confirm-email').classList.add('active');
+    const emailDisplay = document.getElementById('confirm-email-display');
+    if (emailDisplay) emailDisplay.textContent = sessionStorage.getItem('sktcg_confirm_email') || '';
+  }
   else if(page==='account'){
     if (!currentUser) { openAuth('login'); return; }
     document.getElementById('page-account').classList.add('active');
@@ -1360,6 +1384,13 @@ const sb = createClient(
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
+// Detecta se o usuário chegou via link de confirmação de e-mail
+if (window.location.hash.includes('type=signup')) {
+  sessionStorage.setItem('sktcg_email_just_confirmed', '1');
+  // Limpa o hash da URL sem recarregar a página
+  history.replaceState(null, '', window.location.pathname);
+}
+
 // Listener de auth — mantém currentUser em sincronia com a sessão Supabase
 sb.auth.onAuthStateChange(async (event, session) => {
   // Usuário chegou pelo link de redefinição de senha
@@ -1403,6 +1434,17 @@ sb.auth.onAuthStateChange(async (event, session) => {
       cpf: profile?.cpf || '',
       addresses: addresses || []
     };
+
+    // Exibe boas-vindas se o usuário acabou de confirmar o e-mail
+    if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
+      sessionStorage.removeItem('sktcg_email_just_confirmed');
+      sessionStorage.removeItem('sktcg_confirm_email');
+      const firstName = currentUser.name ? currentUser.name.split(' ')[0] : 'Cliente';
+      setTimeout(() => {
+        navigate('home');
+        showToast(`Olá, ${firstName}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
+      }, 300);
+    }
   } else {
     currentUser = null;
   }
@@ -1591,7 +1633,8 @@ async function doRegister(e) {
     if (data.session) {
       showToast('Bem-vindo à SK TCG!', 'Sua conta foi criada com sucesso.', 'success');
     } else {
-      showToast('Verifique seu e-mail', 'Enviamos um link de confirmação. Caso não encontre, cheque a pasta de spam.', 'info', 8000);
+      sessionStorage.setItem('sktcg_confirm_email', email);
+      navigate('confirm-email');
     }
   } catch(ex) {
     const msg = ex?.message || '';
@@ -1635,6 +1678,7 @@ async function doNewPassword(e) {
   try {
     const { error } = await sb.auth.updateUser({ password: pw });
     if (error) throw error;
+    if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
     closeAuth();
     showToast('Senha redefinida!', 'Sua nova senha foi salva com sucesso.', 'success');
     setTimeout(() => navigate('home'), 1000);
@@ -1644,6 +1688,22 @@ async function doNewPassword(e) {
     err.textContent = msg ? `Erro: ${msg}` : 'Erro ao redefinir senha. Tente solicitar um novo link de recuperação.';
   } finally {
     if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
+  }
+}
+
+async function resendConfirmEmail() {
+  const email = sessionStorage.getItem('sktcg_confirm_email');
+  const btn = document.getElementById('btn-resend');
+  if (!email) { showToast('E-mail não encontrado', 'Tente fazer o cadastro novamente.', 'error'); return; }
+  if (btn) { btn.textContent = 'Enviando...'; btn.disabled = true; }
+  try {
+    const { error } = await sb.auth.resend({ type: 'signup', email });
+    if (error) throw error;
+    showToast('E-mail reenviado!', 'Verifique sua caixa de entrada e a pasta de spam.', 'success', 6000);
+  } catch(ex) {
+    showToast('Erro ao reenviar', ex?.message || 'Tente novamente em alguns minutos.', 'error');
+  } finally {
+    if (btn) { btn.textContent = 'Reenviar e-mail'; btn.disabled = false; }
   }
 }
 
