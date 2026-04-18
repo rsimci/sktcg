@@ -796,7 +796,7 @@ ul{list-style:none;}
       <p style="font-size:14px;font-weight:300;color:var(--gray-500);line-height:1.7;margin-bottom:8px;">Enviamos um link de confirmação para:</p>
       <p style="font-size:14px;font-weight:500;color:var(--navy);margin-bottom:24px;" id="confirm-email-display">—</p>
       <p style="font-size:13px;font-weight:300;color:var(--gray-500);line-height:1.7;margin-bottom:32px;">Clique no link do e-mail para ativar sua conta e acessar o site.<br><span style="color:var(--gray-400);font-size:12px;">Não encontrou? Verifique a pasta de spam.</span></p>
-      <button onclick="checkEmailConfirmed()" id="btn-check-confirmed" style="background:var(--purple);color:var(--white);border:none;border-radius:8px;padding:13px 28px;font-size:13px;font-weight:400;cursor:pointer;letter-spacing:0.5px;margin-bottom:12px;width:100%;max-width:280px;transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Já confirmei o e-mail</button>
+      <button onclick="checkEmailConfirmed()" id="btn-check-confirmed" style="background:var(--purple);color:var(--white);border:none;border-radius:8px;padding:13px 28px;font-size:13px;font-weight:400;cursor:pointer;letter-spacing:0.5px;margin-bottom:12px;width:100%;max-width:280px;transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Já confirmei — Entrar na conta</button>
       <br>
       <button onclick="resendConfirmEmail()" id="btn-resend" style="background:transparent;color:var(--navy);border:1px solid var(--gray-200);border-radius:8px;padding:11px 28px;font-size:13px;font-weight:300;cursor:pointer;letter-spacing:0.5px;margin-bottom:16px;width:100%;max-width:280px;transition:opacity 0.2s;" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">Reenviar e-mail</button>
       <br>
@@ -1202,7 +1202,7 @@ function navigate(page, param){
     if (!currentUser) { openAuth('login'); return; }
     document.getElementById('page-account').classList.add('active');
     const title = document.getElementById('accountPageTitle');
-    if (title) title.textContent = 'Olá, ' + (currentUser.name ? currentUser.name.split(' ')[0] : 'Cliente');
+    if (title) title.textContent = 'Olá, ' + getFirstName(currentUser);
     showAccountSection(param || 'orders');
   }
 }
@@ -1443,10 +1443,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
       sessionStorage.removeItem('sktcg_email_just_confirmed');
       sessionStorage.removeItem('sktcg_confirm_email');
-      const firstName = currentUser.name ? currentUser.name.split(' ')[0] : 'Cliente';
       setTimeout(() => {
         navigate('home');
-        showToast(`Olá, ${firstName}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
+        showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
       }, 300);
     }
   } else {
@@ -1456,6 +1455,14 @@ sb.auth.onAuthStateChange(async (event, session) => {
   if (document.getElementById('acc-profile')?.classList.contains('active')) loadProfileForm();
   if (document.getElementById('acc-addresses')?.classList.contains('active')) renderAddresses();
 });
+
+// Retorna o primeiro nome do usuário, com fallbacks progressivos
+function getFirstName(user) {
+  if (!user) return '';
+  if (user.name && user.name.trim()) return user.name.trim().split(' ')[0];
+  if (user.email) return user.email.split('@')[0];
+  return 'Minha Conta';
+}
 
 // ===== TOAST =====
 function showToast(title, msg, type = 'success', duration = 5000) {
@@ -1695,24 +1702,10 @@ async function doNewPassword(e) {
   }
 }
 
-async function checkEmailConfirmed() {
-  const btn = document.getElementById('btn-check-confirmed');
-  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session?.user) {
-      sessionStorage.removeItem('sktcg_confirm_email');
-      const firstName = currentUser?.name?.split(' ')[0] || session.user.email.split('@')[0];
-      navigate('home');
-      showToast(`Olá, ${firstName}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
-    } else {
-      showToast('Ainda não confirmado', 'Clique no link do e-mail que enviamos para ativar sua conta.', 'info', 5000);
-    }
-  } catch(ex) {
-    showToast('Erro ao verificar', 'Tente novamente.', 'error');
-  } finally {
-    if (btn) { btn.textContent = 'Já confirmei o e-mail'; btn.disabled = false; }
-  }
+function checkEmailConfirmed() {
+  // A confirmação feita em outro dispositivo (ex: celular) não cria sessão neste navegador.
+  // O usuário precisa fazer login manualmente após confirmar o e-mail.
+  openAuth('login');
 }
 
 async function resendConfirmEmail() {
@@ -1750,12 +1743,11 @@ function updateAuthUI() {
   const dropdown = accountBtn.querySelector('.account-dropdown');
 
   if (user) {
-    const firstName = user.name ? user.name.split(' ')[0] : (user.email ? user.email.split('@')[0] : 'Minha Conta');
     if (svgEl) svgEl.style.display = 'none';
     const span = document.createElement('span');
     span.id = 'auth-username';
     span.style.cssText = 'font-size:13px;font-weight:400;color:var(--gray-700);';
-    span.textContent = firstName;
+    span.textContent = getFirstName(user);
     accountBtn.insertBefore(span, dropdown);
     dropdown.innerHTML = `
       <div style="padding:10px 20px 6px;font-size:11px;font-weight:300;color:var(--gray-400);letter-spacing:0.5px;">${user.email}</div>
