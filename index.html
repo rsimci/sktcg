@@ -1387,79 +1387,121 @@ document.addEventListener('keydown',function(e){
 // SUPABASE — Cliente e autenticação real
 // ============================================================
 const { createClient } = window.supabase;
+
+// detectSessionInUrl: false → Supabase NÃO processa o ?code= PKCE automaticamente.
+//
+// CAUSA RAIZ dos dois bugs críticos (logout no F5 + login travado):
+//   O processamento automático do ?code= adquire um lock interno (_acquireLock).
+//   Se a troca falhar (código one-time-use reusado no F5, código expirado, ou
+//   cross-browser sem code_verifier), o lock fica preso indefinidamente.
+//   Resultado: signInWithPassword aguarda o lock → timeout de 15s.
+//   O refresh de token também aguarda → SIGNED_OUT → logout automático no F5.
+//
+// Com detectSessionInUrl: false, fazemos a troca manualmente com try/catch,
+// garantindo que qualquer falha é tratada sem bloquear o lock interno.
 const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
-  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB'
+  'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB',
+  { auth: { detectSessionInUrl: false } }
 );
 
-// Limpa ?code= da URL IMEDIATAMENTE após createClient() capturar o valor.
-// O Supabase já internalizou o código para a troca PKCE — podemos limpar a URL
-// agora, de forma síncrona, para que qualquer F5 subsequente carregue a URL limpa
-// e não tente reusar o código (one-time use), o que derrubaria a sessão.
-if (window.location.search.includes('code=')) {
+// Captura a URL ORIGINAL antes de qualquer limpeza.
+// Com detectSessionInUrl: false, o Supabase não leu o ?code= ainda — precisamos
+// capturar para passar manualmente ao exchangeCodeForSession.
+const _rawSearch = window.location.search;
+const _rawHash   = window.location.hash;
+const _urlSearch = new URLSearchParams(_rawSearch);
+const _urlHash   = new URLSearchParams(_rawHash.slice(1));
+
+// ?code= está presente tanto em confirmação de e-mail quanto em recuperação de senha.
+// Não dá para distinguir pelo URL — o onAuthStateChange (SIGNED_IN vs PASSWORD_RECOVERY)
+// é que determina o tipo após a troca.
+const _authCode    = _urlSearch.get('code');
+const _hasAuthCode = !!_authCode;
+
+// Detecção legada de magic link (?type=signup). Com PKCE ativo (padrão no Supabase v2),
+// todos os links usam ?code= sem ?type=signup. Mantido por compatibilidade.
+const _confirmingEmailSignup = _urlSearch.get('type') === 'signup' ||
+                               _urlHash.get('type') === 'signup';
+
+const _confirmingEmail = _confirmingEmailSignup || _hasAuthCode;
+
+// LIMPEZA IMEDIATA da URL — antes de qualquer F5.
+// Como a troca PKCE é manual aqui (capturamos _authCode acima), não há risco
+// de perder o código ao limpar a URL.
+if (_hasAuthCode || _rawSearch.includes('token=') || _rawHash.includes('access_token=')) {
   history.replaceState({}, '', window.location.pathname);
 }
 
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
-// Detecta o tipo de link de auth que o usuário clicou.
-// ?code=xxx pode ser tanto confirmação de cadastro (SIGNED_IN) quanto recuperação de senha
-// (PASSWORD_RECOVERY) — não dá para saber pelo URL. Separamos os casos:
-//
-//   _confirmingEmailSignup: apenas links de confirmação de cadastro explícitos
-//     (?type=signup, ?token_hash+type=signup, #type=signup)
-//     → seta flag, inicia fallback timer para cross-browser
-//
-//   _hasAuthCode: qualquer ?code= PKCE (cadastro OU recuperação de senha)
-//     → apenas mostra overlay; o onAuthStateChange decide o que fazer
-//
-const _urlSearch = new URLSearchParams(window.location.search);
-const _urlHash   = new URLSearchParams(window.location.hash.slice(1));
+// Flag: veio de link de auth PKCE — usada pelo onAuthStateChange para exibir
+// a mensagem de boas-vindas após confirmação de e-mail (SIGNED_IN).
+// Limpa no PASSWORD_RECOVERY para não confundir os dois fluxos.
+if (_hasAuthCode) {
+  sessionStorage.setItem('sktcg_from_auth_link', '1');
+}
 
-const _confirmingEmailSignup = _urlSearch.get('type') === 'signup' ||
-                               _urlHash.get('type') === 'signup'   ||
-                               (_urlSearch.get('type') === 'signup' && !!_urlSearch.get('token_hash'));
-
-const _hasAuthCode   = !!_urlSearch.get('code');
-const _confirmingEmail = _confirmingEmailSignup || _hasAuthCode;
-
-// Flag de confirmação: somente para fluxo de cadastro, nunca para recuperação de senha
+// Flag legada: magic link de confirmação sem ?code=
 if (_confirmingEmailSignup) {
   sessionStorage.setItem('sktcg_email_just_confirmed', '1');
 }
 
-// Overlay de loading: para qualquer link de auth (DOMContentLoaded já disparou pois
-// o script está no final do body — usamos setTimeout(0) para garantir que showLoading
-// já está definido quando executar)
+// Overlay de loading para qualquer fluxo de auth via link
+// (setTimeout(0): DOMContentLoaded já disparou — script está no final do body)
 if (_confirmingEmail) {
   setTimeout(() => showLoading('Verificando'), 0);
 }
 
-// Fallback cross-browser: apenas para confirmação de cadastro, não para recuperação.
-// Se o Supabase não autenticar em 6s (ex: PKCE cross-device), pede login manual.
+// Troca PKCE manual — tratamento de erros garante que o lock interno não trava
 let _confirmFallbackTimer = null;
-if (_confirmingEmailSignup) {
+if (_authCode) {
+  // URL original com ?code= para o exchangeCodeForSession
+  const _originalUrl = window.location.origin + window.location.pathname + _rawSearch;
+
+  setTimeout(async () => {
+    try {
+      await sb.auth.exchangeCodeForSession(_originalUrl);
+      // Sucesso → onAuthStateChange dispara SIGNED_IN ou PASSWORD_RECOVERY
+    } catch(e) {
+      console.error('[auth] exchangeCodeForSession falhou:', e);
+      hideLoading();
+      sessionStorage.removeItem('sktcg_from_auth_link');
+      // Cross-browser (sem code_verifier) ou link expirado — fallback manual
+      const confirmEmail = sessionStorage.getItem('sktcg_confirm_email');
+      if (confirmEmail) {
+        // Provavelmente confirmação de e-mail cross-browser (mobile → desktop)
+        sessionStorage.removeItem('sktcg_confirm_email');
+        showToast('E-mail confirmado!', 'Faça login para acessar sua conta.', 'success', 8000);
+        openAuth('login');
+      } else {
+        // Link expirado ou inválido
+        showToast('Link expirado', 'Solicite um novo link de recuperação de senha ou tente fazer login.', 'error', 8000);
+      }
+    }
+  }, 0);
+} else if (_confirmingEmailSignup) {
+  // Fallback para magic link legado cross-browser (sem ?code=)
   _confirmFallbackTimer = setTimeout(() => {
     if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
       sessionStorage.removeItem('sktcg_email_just_confirmed');
       sessionStorage.removeItem('sktcg_confirm_email');
-      history.replaceState({}, '', window.location.pathname);
       hideLoading();
       showToast('E-mail confirmado!', 'Agora faça login para acessar sua conta.', 'success', 8000);
       openAuth('login');
     }
-  }, 6000); // 6s: dá tempo para troca PKCE completar no mesmo browser (2–5s), antes de cair no fallback manual
+  }, 6000);
 }
 
 // Listener de auth — mantém currentUser em sincronia com a sessão Supabase
 sb.auth.onAuthStateChange(async (event, session) => {
   // Usuário chegou pelo link de redefinição de senha
   if (event === 'PASSWORD_RECOVERY') {
-    // O ?code= do link de recuperação dispara _confirmingEmail incorretamente — cancela o timer
     if (_confirmFallbackTimer) clearTimeout(_confirmFallbackTimer);
+    // Limpa flags de auth para não contaminar o fluxo de recuperação
+    sessionStorage.removeItem('sktcg_from_auth_link');
     sessionStorage.removeItem('sktcg_email_just_confirmed');
-    history.replaceState({}, '', window.location.pathname); // evita reuso do ?code= no refresh
     hideLoading();
     switchTab('newpassword');
     document.getElementById('authModal').classList.add('active');
@@ -1505,20 +1547,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
       addresses: addresses || []
     };
 
-    // Exibe boas-vindas ao confirmar e-mail (somente para fluxo de cadastro)
-    if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
+    // Exibe boas-vindas ao confirmar e-mail.
+    // Verifica tanto a flag PKCE nova (sktcg_from_auth_link) quanto a legada (sktcg_email_just_confirmed).
+    if (sessionStorage.getItem('sktcg_from_auth_link') || sessionStorage.getItem('sktcg_email_just_confirmed')) {
       if (_confirmFallbackTimer) clearTimeout(_confirmFallbackTimer);
+      sessionStorage.removeItem('sktcg_from_auth_link');
       sessionStorage.removeItem('sktcg_email_just_confirmed');
       sessionStorage.removeItem('sktcg_confirm_email');
-      history.replaceState({}, '', window.location.pathname);
       hideLoading();
       navigate('home');
       showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
     } else {
-      // SIGNED_IN sem flag: login manual, login via outra aba, ou sessão de recuperação.
-      // Limpa ?code= da URL para evitar que um refresh tente reusar o código (já consumido),
-      // o que derrubaria a sessão. PASSWORD_RECOVERY virá a seguir se for fluxo de recuperação.
-      if (_hasAuthCode) history.replaceState({}, '', window.location.pathname);
+      // SIGNED_IN sem flag: login manual ou sincronização entre abas.
       hideLoading();
     }
 
