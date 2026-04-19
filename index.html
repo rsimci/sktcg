@@ -395,9 +395,11 @@ ul{list-style:none;}
 <body>
 
 <!-- ANNOUNCEMENT BAR -->
+<!-- ANNOUNCEMENT BAR — descomente para reativar
 <div class="announcement">
   <strong>Frete grátis</strong> para compras acima de R$ 299 — Região Sudeste
 </div>
+-->
 
 <!-- HEADER -->
 <header class="header">
@@ -1389,6 +1391,14 @@ const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
   'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB'
 );
+
+// Limpa ?code= da URL IMEDIATAMENTE após createClient() capturar o valor.
+// O Supabase já internalizou o código para a troca PKCE — podemos limpar a URL
+// agora, de forma síncrona, para que qualquer F5 subsequente carregue a URL limpa
+// e não tente reusar o código (one-time use), o que derrubaria a sessão.
+if (window.location.search.includes('code=')) {
+  history.replaceState({}, '', window.location.pathname);
+}
 
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
