@@ -1388,21 +1388,29 @@ document.addEventListener('keydown',function(e){
 // ============================================================
 const { createClient } = window.supabase;
 
-// detectSessionInUrl: false → Supabase NÃO processa o ?code= PKCE automaticamente.
+// Wrapper de fetch com timeout — essencial para liberar o lock interno do GoTrueClient.
 //
-// CAUSA RAIZ dos dois bugs críticos (logout no F5 + login travado):
-//   O processamento automático do ?code= adquire um lock interno (_acquireLock).
-//   Se a troca falhar (código one-time-use reusado no F5, código expirado, ou
-//   cross-browser sem code_verifier), o lock fica preso indefinidamente.
-//   Resultado: signInWithPassword aguarda o lock → timeout de 15s.
-//   O refresh de token também aguarda → SIGNED_OUT → logout automático no F5.
+// CAUSA RAIZ dos dois bugs (logout no F5 + signInWithPassword travado):
+//   O GoTrueClient usa um lock (_acquireLock) que serializa operações de auth.
+//   Se uma chamada de rede (troca PKCE ou refresh de token) travar sem resposta,
+//   o lock fica preso: signInWithPassword entra na fila e nunca é executado (timeout 15s),
+//   e o refresh de token silencioso falha → SIGNED_OUT → logout no F5.
 //
-// Com detectSessionInUrl: false, fazemos a troca manualmente com try/catch,
-// garantindo que qualquer falha é tratada sem bloquear o lock interno.
+// Com o timeout de 12s no fetch, qualquer rede travada é abortada, o lock é
+// liberado, e operações subsequentes (login, refresh) funcionam normalmente.
+function _sbFetch(input, init) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 12000);
+  return fetch(input, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(tid));
+}
+
 const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
   'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB',
-  { auth: { detectSessionInUrl: false } }
+  {
+    auth: { detectSessionInUrl: false },
+    global: { fetch: _sbFetch }
+  }
 );
 
 // Captura a URL ORIGINAL antes de qualquer limpeza.
@@ -1462,22 +1470,26 @@ if (_authCode) {
 
   setTimeout(async () => {
     try {
-      await sb.auth.exchangeCodeForSession(_originalUrl);
+      // IMPORTANTE: Supabase NÃO lança exceções em erros de auth — retorna { data, error }.
+      // Verificar o retorno é obrigatório; um await simples nunca entraria no catch.
+      const { error } = await sb.auth.exchangeCodeForSession(_originalUrl);
+      if (error) throw error;
       // Sucesso → onAuthStateChange dispara SIGNED_IN ou PASSWORD_RECOVERY
     } catch(e) {
       console.error('[auth] exchangeCodeForSession falhou:', e);
       hideLoading();
       sessionStorage.removeItem('sktcg_from_auth_link');
-      // Cross-browser (sem code_verifier) ou link expirado — fallback manual
+      // Falha = cross-browser (sem code_verifier) ou link expirado — fallback manual
       const confirmEmail = sessionStorage.getItem('sktcg_confirm_email');
       if (confirmEmail) {
-        // Provavelmente confirmação de e-mail cross-browser (mobile → desktop)
+        // Confirmação cross-browser: e-mail foi confirmado server-side, mas a troca
+        // PKCE falhou porque o code_verifier está em outro browser/dispositivo.
         sessionStorage.removeItem('sktcg_confirm_email');
         showToast('E-mail confirmado!', 'Faça login para acessar sua conta.', 'success', 8000);
         openAuth('login');
       } else {
-        // Link expirado ou inválido
-        showToast('Link expirado', 'Solicite um novo link de recuperação de senha ou tente fazer login.', 'error', 8000);
+        // Link expirado ou inválido (ex: já usado, ou link de recuperação de senha)
+        showToast('Link expirado', 'Solicite um novo link ou tente fazer login.', 'error', 8000);
       }
     }
   }, 0);
@@ -1575,6 +1587,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
     }
   } else {
     currentUser = null;
+    // Se SIGNED_OUT chegou enquanto esperávamos um link de auth (ex: troca PKCE
+    // falhou sem lançar exceção), garante que o overlay some e mostra fallback.
+    if (event === 'SIGNED_OUT' && sessionStorage.getItem('sktcg_from_auth_link')) {
+      sessionStorage.removeItem('sktcg_from_auth_link');
+      hideLoading();
+      const confirmEmail = sessionStorage.getItem('sktcg_confirm_email');
+      if (confirmEmail) {
+        sessionStorage.removeItem('sktcg_confirm_email');
+        showToast('E-mail confirmado!', 'Faça login para acessar sua conta.', 'success', 8000);
+        openAuth('login');
+      }
+    }
   }
   updateAuthUI();
   if (document.getElementById('acc-profile')?.classList.contains('active')) loadProfileForm();
