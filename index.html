@@ -2132,7 +2132,7 @@ async function init(){
   updateAuthUI();
 
   // Feedback imediato quando o usuário chega pelo link de confirmação de e-mail
-  if (_confirmingEmail) {
+  if (_hasAuthCode) {
     showToast('Verificando seu e-mail…', 'Aguarde um instante.', 'info', 2500);
   }
 
