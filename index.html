@@ -1441,116 +1441,45 @@ function _sbFetch(input, init) {
   return fetch(input, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(tid));
 }
 
+// Captura se a URL tem ?code= de auth (confirmação de e-mail ou recuperação de senha).
+// Deve ser lido ANTES de createClient: com detectSessionInUrl: true (padrão), o Supabase
+// processa e limpa a URL durante a inicialização assíncrona. Nossa leitura síncrona
+// acontece antes, garantindo que o flag esteja disponível para o onAuthStateChange.
+const _hasAuthCode = !!new URLSearchParams(window.location.search).get('code');
+
 const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
   'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB',
   {
-    auth: { detectSessionInUrl: false },
+    // detectSessionInUrl: true é o padrão recomendado pelo Supabase.
+    // O SDK detecta ?code= na URL, faz a troca PKCE durante initialize() e
+    // armazena a sessão no localStorage — garantindo que F5 restaure a sessão
+    // corretamente via INITIAL_SESSION sem depender de chamadas manuais.
     global: { fetch: _sbFetch }
   }
 );
 
-// Captura a URL ORIGINAL antes de qualquer limpeza.
-// Com detectSessionInUrl: false, o Supabase não leu o ?code= ainda — precisamos
-// capturar para passar manualmente ao exchangeCodeForSession.
-const _rawSearch = window.location.search;
-const _rawHash   = window.location.hash;
-const _urlSearch = new URLSearchParams(_rawSearch);
-const _urlHash   = new URLSearchParams(_rawHash.slice(1));
-
-// ?code= está presente tanto em confirmação de e-mail quanto em recuperação de senha.
-// Não dá para distinguir pelo URL — o onAuthStateChange (SIGNED_IN vs PASSWORD_RECOVERY)
-// é que determina o tipo após a troca.
-const _authCode    = _urlSearch.get('code');
-const _hasAuthCode = !!_authCode;
-
-// Detecção legada de magic link (?type=signup). Com PKCE ativo (padrão no Supabase v2),
-// todos os links usam ?code= sem ?type=signup. Mantido por compatibilidade.
-const _confirmingEmailSignup = _urlSearch.get('type') === 'signup' ||
-                               _urlHash.get('type') === 'signup';
-
-const _confirmingEmail = _confirmingEmailSignup || _hasAuthCode;
-
-// LIMPEZA IMEDIATA da URL — antes de qualquer F5.
-// Como a troca PKCE é manual aqui (capturamos _authCode acima), não há risco
-// de perder o código ao limpar a URL.
-if (_hasAuthCode || _rawSearch.includes('token=') || _rawHash.includes('access_token=')) {
-  history.replaceState({}, '', window.location.pathname);
-}
-
 // Cache do usuário logado (atualizado pelo onAuthStateChange)
 let currentUser = null;
 
-// Flag: veio de link de auth PKCE — usada pelo onAuthStateChange para exibir
-// a mensagem de boas-vindas após confirmação de e-mail (SIGNED_IN).
-// Limpa no PASSWORD_RECOVERY para não confundir os dois fluxos.
+// Overlay de loading enquanto o Supabase processa o link de auth
 if (_hasAuthCode) {
-  sessionStorage.setItem('sktcg_from_auth_link', '1');
-}
-
-// Flag legada: magic link de confirmação sem ?code=
-if (_confirmingEmailSignup) {
-  sessionStorage.setItem('sktcg_email_just_confirmed', '1');
-}
-
-// Overlay de loading para qualquer fluxo de auth via link
-// (setTimeout(0): DOMContentLoaded já disparou — script está no final do body)
-if (_confirmingEmail) {
   setTimeout(() => showLoading('Verificando'), 0);
 }
 
-// Troca PKCE manual — tratamento de erros garante que o lock interno não trava
-let _confirmFallbackTimer = null;
-if (_authCode) {
-  // URL original com ?code= para o exchangeCodeForSession
-  const _originalUrl = window.location.origin + window.location.pathname + _rawSearch;
-
-  setTimeout(async () => {
-    try {
-      // IMPORTANTE: Supabase NÃO lança exceções em erros de auth — retorna { data, error }.
-      // Verificar o retorno é obrigatório; um await simples nunca entraria no catch.
-      const { error } = await sb.auth.exchangeCodeForSession(_originalUrl);
-      if (error) throw error;
-      // Sucesso → onAuthStateChange dispara SIGNED_IN ou PASSWORD_RECOVERY
-    } catch(e) {
-      console.error('[auth] exchangeCodeForSession falhou:', e);
-      hideLoading();
-      sessionStorage.removeItem('sktcg_from_auth_link');
-      // Falha = cross-browser (sem code_verifier) ou link expirado — fallback manual
-      const confirmEmail = sessionStorage.getItem('sktcg_confirm_email');
-      if (confirmEmail) {
-        // Confirmação cross-browser: e-mail foi confirmado server-side, mas a troca
-        // PKCE falhou porque o code_verifier está em outro browser/dispositivo.
-        sessionStorage.removeItem('sktcg_confirm_email');
-        showToast('E-mail confirmado!', 'Faça login para acessar sua conta.', 'success', 8000);
-        openAuth('login');
-      } else {
-        // Link expirado ou inválido (ex: já usado, ou link de recuperação de senha)
-        showToast('Link expirado', 'Solicite um novo link ou tente fazer login.', 'error', 8000);
-      }
-    }
-  }, 0);
-} else if (_confirmingEmailSignup) {
-  // Fallback para magic link legado cross-browser (sem ?code=)
-  _confirmFallbackTimer = setTimeout(() => {
-    if (sessionStorage.getItem('sktcg_email_just_confirmed')) {
-      sessionStorage.removeItem('sktcg_email_just_confirmed');
-      sessionStorage.removeItem('sktcg_confirm_email');
-      hideLoading();
-      showToast('E-mail confirmado!', 'Agora faça login para acessar sua conta.', 'success', 8000);
-      openAuth('login');
-    }
-  }, 6000);
-}
-
-// Listener de auth — mantém currentUser em sincronia com a sessão Supabase
+// Listener de auth — mantém currentUser em sincronia com a sessão Supabase.
+//
+// Eventos relevantes:
+//   INITIAL_SESSION  — disparado na inicialização da página (F5 ou primeiro load).
+//                      session != null → sessão restaurada do localStorage (usuário logado).
+//                      session == null + _hasAuthCode → confirmação cross-browser (troca falhou).
+//   SIGNED_IN        — login manual (signInWithPassword) OU troca PKCE bem-sucedida na mesma sessão.
+//                      _hasAuthCode + SIGNED_IN → e-mail confirmado nesta aba → boas-vindas.
+//   PASSWORD_RECOVERY — link de redefinição de senha com ?code= válido.
+//   SIGNED_OUT       — logout explícito ou sessão expirada.
 sb.auth.onAuthStateChange(async (event, session) => {
   // Usuário chegou pelo link de redefinição de senha
   if (event === 'PASSWORD_RECOVERY') {
-    if (_confirmFallbackTimer) clearTimeout(_confirmFallbackTimer);
-    // Limpa flags de auth para não contaminar o fluxo de recuperação
-    sessionStorage.removeItem('sktcg_from_auth_link');
-    sessionStorage.removeItem('sktcg_email_just_confirmed');
     hideLoading();
     switchTab('newpassword');
     document.getElementById('authModal').classList.add('active');
@@ -1596,45 +1525,43 @@ sb.auth.onAuthStateChange(async (event, session) => {
       addresses: addresses || []
     };
 
-    // Exibe boas-vindas ao confirmar e-mail.
-    // Verifica tanto a flag PKCE nova (sktcg_from_auth_link) quanto a legada (sktcg_email_just_confirmed).
-    if (sessionStorage.getItem('sktcg_from_auth_link') || sessionStorage.getItem('sktcg_email_just_confirmed')) {
-      if (_confirmFallbackTimer) clearTimeout(_confirmFallbackTimer);
-      sessionStorage.removeItem('sktcg_from_auth_link');
-      sessionStorage.removeItem('sktcg_email_just_confirmed');
-      sessionStorage.removeItem('sktcg_confirm_email');
+    if (_hasAuthCode && event === 'SIGNED_IN') {
+      // Troca PKCE bem-sucedida nesta aba: e-mail confirmado → boas-vindas
       hideLoading();
+      sessionStorage.removeItem('sktcg_confirm_email');
       navigate('home');
       showToast(`Olá, ${getFirstName(currentUser)}!`, 'Seu e-mail foi confirmado. Bem-vindo à SK TCG!', 'success', 6000);
     } else {
-      // SIGNED_IN sem flag: login manual ou sincronização entre abas.
+      // INITIAL_SESSION (F5 ou abertura normal) ou SIGNED_IN de login manual / sincronização entre abas
       hideLoading();
     }
 
-    // Se o usuário fez login enquanto estava na página intermediária, volta para a home
+    // Se o usuário estava na página intermediária, volta para a home
     if (document.getElementById('page-confirm-email')?.classList.contains('active')) {
       navigate('home');
     }
 
-    // Se o modal de auth estava aberto (ex: fallback timer abriu login enquanto a
-    // troca PKCE ainda processava), fecha o modal — o usuário já está autenticado.
-    // Isso também cobre sincronização entre abas: Tab B confirma → Tab A atualiza.
+    // Fecha o modal de auth se ainda estiver aberto (ex: sincronização entre abas)
     if (document.getElementById('authModal')?.classList.contains('active')) {
       closeAuth();
     }
   } else {
     currentUser = null;
-    // Se SIGNED_OUT chegou enquanto esperávamos um link de auth (ex: troca PKCE
-    // falhou sem lançar exceção), garante que o overlay some e mostra fallback.
-    if (event === 'SIGNED_OUT' && sessionStorage.getItem('sktcg_from_auth_link')) {
-      sessionStorage.removeItem('sktcg_from_auth_link');
+
+    if (_hasAuthCode && event === 'INITIAL_SESSION') {
+      // ?code= estava na URL mas a troca falhou: cross-browser (code_verifier em outro dispositivo)
+      // ou link já expirado/usado. E-mail pode já estar confirmado server-side.
       hideLoading();
       const confirmEmail = sessionStorage.getItem('sktcg_confirm_email');
       if (confirmEmail) {
         sessionStorage.removeItem('sktcg_confirm_email');
         showToast('E-mail confirmado!', 'Faça login para acessar sua conta.', 'success', 8000);
-        openAuth('login');
+      } else {
+        showToast('Link expirado ou já utilizado', 'Tente fazer login ou solicite um novo link.', 'error', 8000);
       }
+      openAuth('login');
+    } else {
+      hideLoading();
     }
   }
   updateAuthUI();
@@ -1916,10 +1843,16 @@ async function doNewPassword(e) {
   }
 }
 
-function checkEmailConfirmed() {
-  // A confirmação feita em outro dispositivo (ex: celular) não cria sessão neste navegador.
-  // O usuário precisa fazer login manualmente após confirmar o e-mail.
-  openAuth('login');
+async function checkEmailConfirmed() {
+  // Verifica se a sessão já existe — o que acontece quando o usuário confirma o e-mail
+  // no mesmo navegador (a aba da confirmação sincroniza a sessão via localStorage).
+  // Se já está logado, vai direto para a home. Caso contrário, abre o login manual.
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    navigate('home');
+  } else {
+    openAuth('login');
+  }
 }
 
 async function resendConfirmEmail() {
