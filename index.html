@@ -1070,21 +1070,21 @@ const IMG = {
 
 const products = [
   // ASCENDED HEROES — Mega Evolution Series 2026
-  {id:1, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'etb', img:IMG.ahETB, price:409.49, badge:'new', stock:'in', qty:10,
+  {id:1, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'etb', img:IMG.ahETB, price:409.49, badge:'new', stockQty:10,
    desc:'Elite Trainer Box da expansão Mega Evolution — Ascended Heroes. Inclui 9 Booster Packs, promo full art de N\'s Zekrom, 65 sleeves exclusivas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
    specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'9 Booster Packs + acessórios',Promo:"N's Zekrom Full Art",Sleeves:'65 un. — design Mega Dragonite ex',Idioma:'Inglês',Lançamento:'Fev 2026'}},
-  {id:2, name:'Mini Tin — Ascended Heroes', edition:'Ascended Heroes', category:'accessories', ptype:'pack', img:IMG.ahTin, price:81.89, badge:'new', stock:'in', qty:10,
+  {id:2, name:'Mini Tin — Ascended Heroes', edition:'Ascended Heroes', category:'accessories', ptype:'pack', img:IMG.ahTin, price:81.89, badge:'new', stockQty:10,
    desc:'Mini Tin colecionável da expansão Mega Evolution — Ascended Heroes. Inclui 2 Booster Packs e uma moeda metálica exclusiva. Coleção completa combina as artes das 5 latas.',
    specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'2 Booster Packs + moeda metálica',Idioma:'Inglês',Formato:'Lata colecionável',Lançamento:'Fev 2026'}},
-  {id:3, name:'Booster Bundle — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'pack', img:IMG.ahBundle, price:209.99, stock:'in', qty:25,
+  {id:3, name:'Booster Bundle — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'pack', img:IMG.ahBundle, price:209.99, stockQty:25,
    desc:'Booster Bundle com 6 Booster Packs da expansão Mega Evolution — Ascended Heroes. Melhor custo-benefício para maximizar pulls raros e acelerar a coleção.',
    specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'6 Booster Packs',Idioma:'Inglês',Formato:'Bundle lacrado',Lançamento:'Fev 2026'}},
 
   // PERFECT ORDER — Mega Evolution Series 2026
-  {id:4, name:'3-Pack Blister — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'pack', img:IMG.poBlister, price:104.99, stock:'in', qty:24,
+  {id:4, name:'3-Pack Blister — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'pack', img:IMG.poBlister, price:104.99, stockQty:24,
    desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Perfect Order. Inclui promo foil Chikorita e moeda metálica colecionável. Mega Zygarde ex lidera a expansão baseada em Pokémon Legends: Z-A.',
    specs:{Edição:'Mega Evolution — Perfect Order',Conteúdo:'3 Booster Packs + promo + moeda',Promo:'Chikorita foil (MEP069)',Idioma:'Inglês',Lançamento:'Mar 2026'}},
-  {id:5, name:'ETB — Perfect Order', edition:'Perfect Order', category:'boxes', ptype:'etb', img:IMG.poETB, price:409.49, stock:'in', qty:10,
+  {id:5, name:'ETB — Perfect Order', edition:'Perfect Order', category:'boxes', ptype:'etb', img:IMG.poETB, price:409.49, stockQty:10,
    desc:'Elite Trainer Box da expansão Mega Evolution — Perfect Order. Contém 9 Booster Packs, promo Tyrunt Full Art, 65 sleeves temáticas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
    specs:{Edição:'Mega Evolution — Perfect Order',Conteúdo:'9 Booster Packs + acessórios',Promo:'Tyrunt Full Art',Mascote:'Mega Zygarde ex',Sleeves:'65 un. — design exclusivo',Idioma:'Inglês',Lançamento:'Mar 2026'}},
 ];
@@ -1120,9 +1120,18 @@ function getProductImage(p){
 function renderProductCard(p){
   const badgeHTML = p.badge ? `<span class="badge badge-${p.badge}">${{new:'Novo',sale:'Oferta',hot:'Destaque',graded:'Graduada'}[p.badge]}</span>` : '';
   const oldPriceHTML = p.oldPrice ? `<span class="price-old product-price-old">R$ ${p.oldPrice.toFixed(2).replace('.',',')}</span> ` : '';
-  const qty = p.qty != null ? p.qty : (p.stock==='out' ? 0 : p.stock==='low' ? 3 : 99);
-  const stockClass = qty===0?'out':qty<=5?'low':'';
-  const stockText = qty===0?'Esgotado':qty<=5?`Últimas ${qty} unidades`:'Em estoque';
+  const qty = Number(p.stockQty ?? 0);
+  const isOut = qty === 0;
+  const isLow = qty > 0 && qty <= 3;
+  const stockClass = isOut ? 'out' : isLow ? 'low' : '';
+  const stockText  = isOut ? 'Esgotado' : isLow ? `Últimas ${qty} unidades` : 'Em estoque';
+  const addBtnHTML = isOut
+    ? `<button class="add-cart-btn" disabled title="Esgotado" style="opacity:0.4;cursor:not-allowed;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>`
+    : `<button class="add-cart-btn" onclick="event.stopPropagation();addToCart('${p.id}');" title="Adicionar ao carrinho">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>`;
   return `
     <div class="product-card" onclick="navigate('detail','${p.id}')">
       <div class="product-img">
@@ -1138,9 +1147,7 @@ function renderProductCard(p){
             ${oldPriceHTML}
             <span class="product-price">R$ ${p.price.toFixed(2).replace('.',',')}</span>
           </div>
-          <button class="add-cart-btn" onclick="event.stopPropagation();addToCart('${p.id}');" title="Adicionar ao carrinho">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
+          ${addBtnHTML}
         </div>
         <div class="product-stock ${stockClass}">${stockText}</div>
       </div>
@@ -1262,6 +1269,15 @@ function showDetail(productId){
   const specsHTML = p.specs ? Object.entries(p.specs).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('') : '';
   const installment = (p.price/12).toFixed(2).replace('.',',');
 
+  const stockQty  = Number(p.stockQty ?? 0);
+  const isOut     = stockQty === 0;
+  const isLow     = stockQty > 0 && stockQty <= 3;
+  const stockCls  = isOut ? 'out' : isLow ? 'low' : '';
+  const stockLbl  = isOut ? 'Esgotado' : isLow ? `Últimas ${stockQty} unidades` : 'Em estoque';
+  // expõe limite de qtd pro updateQty
+  window._detailMaxQty = Math.max(1, stockQty);
+  qty = 1; // reset contador global
+
   document.getElementById('detailInfo').innerHTML = `
     ${badgeHTML}
     <div class="detail-brand">Pokémon TCG</div>
@@ -1273,15 +1289,17 @@ function showDetail(productId){
     <div class="detail-description">${p.desc}</div>
     <dl class="detail-specs">${specsHTML}</dl>
     <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
-      <div class="qty-control">
+      <div class="qty-control" ${isOut?'style="opacity:0.4;pointer-events:none;"':''}>
         <button onclick="updateQty(-1)">−</button>
         <span id="qtyVal">1</span>
         <button onclick="updateQty(1)">+</button>
       </div>
-      <div class="product-stock ${p.stock==='low'?'low':''}">${p.stock==='in'?'Em estoque':p.stock==='low'?'Últimas unidades':'Esgotado'}</div>
+      <div class="product-stock ${stockCls}">${stockLbl}</div>
     </div>
     <div class="detail-cta">
-      <button class="btn-primary" onclick="addToCart('${p.id}')">Adicionar ao Carrinho</button>
+      <button class="btn-primary" onclick="addToCart('${p.id}', qty)" ${isOut?'disabled style="opacity:0.5;cursor:not-allowed;"':''}>
+        ${isOut ? 'Indisponível' : 'Adicionar ao Carrinho'}
+      </button>
       <button class="btn-secondary">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
@@ -1290,7 +1308,8 @@ function showDetail(productId){
 
 let qty = 1;
 function updateQty(d){
-  qty = Math.max(1, Math.min(99, qty+d));
+  const max = Math.min(99, Number(window._detailMaxQty || 99));
+  qty = Math.max(1, Math.min(max, qty+d));
   const el = document.getElementById('qtyVal');
   if(el) el.textContent = qty;
 }
@@ -1298,10 +1317,28 @@ function updateQty(d){
 // ===== CART STATE =====
 let cart = [];
 
-function addToCart(id){
+function addToCart(id, requestedQty){
+  const p = products.find(x => x.id === id);
+  if(!p){ return; }
+  const stockQty = Number(p.stockQty ?? 0);
+  if(stockQty <= 0){
+    if(typeof showToast === 'function') showToast('Produto esgotado', 'Este item não está disponível no momento.', 'error', 3000);
+    return;
+  }
+  const askQty = Math.max(1, Number(requestedQty || 1));
   const existing = cart.find(x => x.id === id);
-  if(existing){ existing.qty++; }
-  else { cart.push({id: id, qty: 1}); }
+  const alreadyIn = existing ? existing.qty : 0;
+  const available = Math.max(0, stockQty - alreadyIn);
+  if(available <= 0){
+    if(typeof showToast === 'function') showToast('Limite de estoque', `Você já tem todas as ${stockQty} unidades disponíveis no carrinho.`, 'info', 3000);
+    return;
+  }
+  const addQty = Math.min(askQty, available);
+  if(existing){ existing.qty += addQty; }
+  else { cart.push({id: id, qty: addQty}); }
+  if(addQty < askQty && typeof showToast === 'function'){
+    showToast('Estoque limitado', `Apenas ${addQty} unidade(s) adicionada(s) — limite de estoque.`, 'info', 3000);
+  }
   renderCart();
   document.getElementById('cartOverlay').classList.add('active');
   document.getElementById('cartSidebar').classList.add('active');
@@ -2180,8 +2217,7 @@ async function init(){
         price:    parseFloat(p.price),
         oldPrice: p.old_price ? parseFloat(p.old_price) : null,
         badge:    p.badge    || null,
-        stock:    p.stock    || 'in',
-        qty:      null,
+        stockQty: Number(p.stock_qty ?? 0),
         desc:     p.description || '',
         img:      p.img_url  || null,
         specs:    p.specs    || {}
