@@ -493,7 +493,7 @@ ul{list-style:none;}
       <span class="cart-total-value" id="cartTotalValue">R$ 0,00</span>
     </div>
     <div class="cart-installments" id="cartInstallments"></div>
-    <button class="cart-checkout">Finalizar Compra</button>
+    <button class="cart-checkout" id="checkoutBtn" onclick="startCheckout()">Finalizar Compra</button>
   </div>
 </div>
 
@@ -1394,6 +1394,55 @@ function renderCart(){
   document.getElementById('cartInstallments').textContent = `ou 12x de R$ ${(total/12).toFixed(2).replace('.',',')} sem juros`;
 }
 
+// ===== CHECKOUT =====
+async function startCheckout() {
+  if (cart.length === 0) {
+    showToast('Carrinho vazio', 'Adicione produtos antes de finalizar a compra.', 'info', 3000);
+    return;
+  }
+
+  if (!currentUser) {
+    toggleCart();
+    openAuth('login');
+    return;
+  }
+
+  const address = currentUser.addresses && currentUser.addresses[0];
+  if (!address) {
+    showToast('Endereço necessário', 'Cadastre um endereço de entrega antes de finalizar.', 'info', 4500);
+    toggleCart();
+    setTimeout(() => navigate('account', 'addresses'), 400);
+    return;
+  }
+
+  const btn = document.getElementById('checkoutBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processando…'; }
+
+  try {
+    const res = await fetch('/api/create-preference', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cart: cart.map(c => ({ id: c.id, qty: c.qty })),
+        user_id: currentUser.id,
+        shipping_address: address,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Erro ao iniciar checkout');
+
+    // sandbox_init_point = testes | init_point = produção
+    const checkoutUrl = data.sandbox_init_point || data.init_point;
+    window.location.href = checkoutUrl;
+
+  } catch (err) {
+    showToast('Erro no checkout', err.message || 'Tente novamente.', 'error', 5000);
+    if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
+  }
+}
+
 // ===== UI HELPERS =====
 function toggleSearch(){
   document.getElementById('searchOverlay').classList.toggle('active');
@@ -2191,6 +2240,23 @@ async function init(){
   // Feedback imediato quando o usuário chega pelo link de confirmação de e-mail
   if (_hasAuthCode) {
     showToast('Verificando seu e-mail…', 'Aguarde um instante.', 'info', 2500);
+  }
+
+  // Retorno do Mercado Pago após pagamento
+  const _checkoutStatus = new URLSearchParams(window.location.search).get('checkout_status');
+  if (_checkoutStatus) {
+    // Limpa os parâmetros da URL sem recarregar a página
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if (_checkoutStatus === 'approved') {
+      showToast('Pagamento aprovado! 🎉', 'Seu pedido foi confirmado. Obrigado pela compra!', 'success', 7000);
+      // Navega para Meus Pedidos assim que o usuário carregar
+      setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 2500);
+    } else if (_checkoutStatus === 'pending') {
+      showToast('Pagamento em análise', 'Seu pedido está sendo processado. Você receberá uma confirmação em breve.', 'info', 7000);
+    } else if (_checkoutStatus === 'rejected') {
+      showToast('Pagamento não aprovado', 'Tente novamente com outro método de pagamento.', 'error', 7000);
+    }
   }
 
   // Carregar produtos do Supabase; fallback para hardcoded se tabela vazia ou offline
