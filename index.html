@@ -1481,7 +1481,53 @@ if (_hasAuthCode) {
 //                      _hasAuthCode + SIGNED_IN → e-mail confirmado nesta aba → boas-vindas.
 //   PASSWORD_RECOVERY — link de redefinição de senha com ?code= válido.
 //   SIGNED_OUT       — logout explícito ou sessão expirada.
-sb.auth.onAuthStateChange(async (event, session) => {
+// ===== CARREGAMENTO DE PERFIL FORA DO LOCK =====
+// Busca perfil e endereços do Supabase APÓS o initialize() liberar o lock.
+// Chamado via setTimeout(0) dentro do onAuthStateChange para evitar deadlock:
+// initialize() segura o lock → dispara onAuthStateChange → nosso callback retorna
+// imediatamente (sem await de DB) → lock liberado → setTimeout roda → DB queries ok.
+async function _loadUserProfile(uid, email, metadata) {
+  // Salvar dados pendentes do cadastro (quando havia confirmação de e-mail)
+  const pendingKey = 'sktcg_pending_profile_' + email;
+  const pendingRaw = localStorage.getItem(pendingKey);
+  if (pendingRaw) {
+    try {
+      const pending = JSON.parse(pendingRaw);
+      await sb.from('profiles').upsert({ id: uid, name: pending.name, phone: pending.phone, cpf: pending.cpf });
+      if (pending.address?.cep || pending.address?.street) {
+        await sb.from('addresses').insert({ user_id: uid, ...pending.address, label: 'Principal' });
+      }
+      localStorage.removeItem(pendingKey);
+    } catch(e) {
+      console.warn('Erro ao salvar dados pendentes:', e);
+    }
+  }
+
+  try {
+    const [{ data: profile }, { data: addresses }] = await Promise.all([
+      sb.from('profiles').select('*').eq('id', uid).single(),
+      sb.from('addresses').select('*').eq('user_id', uid).order('created_at')
+    ]);
+
+    const resolvedName = profile?.name || metadata?.name || '';
+    currentUser = {
+      id: uid,
+      email,
+      name: resolvedName,
+      phone: profile?.phone || '',
+      cpf: profile?.cpf || '',
+      addresses: addresses || []
+    };
+  } catch(e) {
+    console.warn('[auth] _loadUserProfile falhou:', e?.message);
+  }
+
+  updateAuthUI();
+  if (document.getElementById('acc-profile')?.classList.contains('active')) loadProfileForm();
+  if (document.getElementById('acc-addresses')?.classList.contains('active')) renderAddresses();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
   // Usuário chegou pelo link de redefinição de senha
   if (event === 'PASSWORD_RECOVERY') {
     hideLoading();
@@ -1495,38 +1541,14 @@ sb.auth.onAuthStateChange(async (event, session) => {
     const uid = session.user.id;
     const email = session.user.email;
 
-    // Salvar dados pendentes do cadastro (quando havia confirmação de e-mail)
-    const pendingKey = 'sktcg_pending_profile_' + email;
-    const pendingRaw = localStorage.getItem(pendingKey);
-    if (pendingRaw) {
-      try {
-        const pending = JSON.parse(pendingRaw);
-        await sb.from('profiles').upsert({ id: uid, name: pending.name, phone: pending.phone, cpf: pending.cpf });
-        if (pending.address?.cep || pending.address?.street) {
-          await sb.from('addresses').insert({ user_id: uid, ...pending.address, label: 'Principal' });
-        }
-        localStorage.removeItem(pendingKey);
-      } catch(e) {
-        console.warn('Erro ao salvar dados pendentes:', e);
-        // Mantém no localStorage para tentar novamente no próximo login
-      }
-    }
-
-    const [{ data: profile }, { data: addresses }] = await Promise.all([
-      sb.from('profiles').select('*').eq('id', uid).single(),
-      sb.from('addresses').select('*').eq('user_id', uid).order('created_at')
-    ]);
-
-    // Nome: prioridade ao perfil salvo, depois ao metadata do cadastro, depois ao email
-    const resolvedName = profile?.name || session.user.user_metadata?.name || '';
-
+    // Definir currentUser mínimo imediatamente (sem DB) para liberar o lock
     currentUser = {
       id: uid,
       email,
-      name: resolvedName,
-      phone: profile?.phone || '',
-      cpf: profile?.cpf || '',
-      addresses: addresses || []
+      name: session.user.user_metadata?.name || '',
+      phone: '',
+      cpf: '',
+      addresses: []
     };
 
     _scheduleTokenRefresh(); // inicia/renova o timer de refresh preventivo
@@ -1551,6 +1573,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (document.getElementById('authModal')?.classList.contains('active')) {
       closeAuth();
     }
+
+    // Busca perfil completo fora do lock (setTimeout garante que initialize() já liberou)
+    setTimeout(() => _loadUserProfile(uid, email, session.user.user_metadata), 0);
   } else {
     currentUser = null;
     if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; } // cancela refresh
