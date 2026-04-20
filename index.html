@@ -1451,10 +1451,14 @@ const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
   'sb_publishable_IAIaIWz1JVAur1XEKIfPSA_8GFmKTIB',
   {
-    // detectSessionInUrl: true é o padrão recomendado pelo Supabase.
-    // O SDK detecta ?code= na URL, faz a troca PKCE durante initialize() e
-    // armazena a sessão no localStorage — garantindo que F5 restaure a sessão
-    // corretamente via INITIAL_SESSION sem depender de chamadas manuais.
+    // detectSessionInUrl: true (padrão) — Supabase detecta ?code= e faz a troca PKCE
+    // autoRefreshToken: false — desabilita o refresh automático em background.
+    //   O refresh automático usa o mesmo lock interno do GoTrueClient; se o request
+    //   travar e o _sbFetch demorar 12s para abortar, o lock fica preso e
+    //   signInWithPassword fica bloqueado, causando timeout no login.
+    //   Substituído por _scheduleTokenRefresh() abaixo, que faz refresh manual
+    //   controlado sem risco de bloquear o lock durante ações do usuário.
+    auth: { autoRefreshToken: false },
     global: { fetch: _sbFetch }
   }
 );
@@ -1525,6 +1529,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       addresses: addresses || []
     };
 
+    _scheduleTokenRefresh(); // inicia/renova o timer de refresh preventivo
+
     if (_hasAuthCode && event === 'SIGNED_IN') {
       // Troca PKCE bem-sucedida nesta aba: e-mail confirmado → boas-vindas
       hideLoading();
@@ -1547,6 +1553,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     }
   } else {
     currentUser = null;
+    if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; } // cancela refresh
 
     if (_hasAuthCode && event === 'INITIAL_SESSION') {
       // ?code= estava na URL mas a troca falhou: cross-browser (code_verifier em outro dispositivo)
@@ -1568,6 +1575,31 @@ sb.auth.onAuthStateChange(async (event, session) => {
   if (document.getElementById('acc-profile')?.classList.contains('active')) loadProfileForm();
   if (document.getElementById('acc-addresses')?.classList.contains('active')) renderAddresses();
 });
+
+// ===== REFRESH MANUAL DE TOKEN =====
+// Substitui autoRefreshToken: true. Verifica a cada 2 minutos se o token
+// expira em menos de 5 minutos e faz o refresh preventivo.
+// Opera fora do lock principal — só chama refreshSession() quando necessário,
+// evitando bloquear signInWithPassword e outras operações do usuário.
+let _refreshTimer = null;
+function _scheduleTokenRefresh() {
+  if (_refreshTimer) clearTimeout(_refreshTimer);
+  _refreshTimer = setTimeout(async () => {
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return; // sem sessão ativa, nada a fazer
+      const now = Math.floor(Date.now() / 1000);
+      const expiresIn = (session.expires_at || 0) - now;
+      if (expiresIn < 300) { // menos de 5 min para expirar → refresh
+        await sb.auth.refreshSession();
+      }
+    } catch(e) {
+      console.warn('[auth] refresh preventivo falhou:', e?.message);
+    } finally {
+      _scheduleTokenRefresh(); // reagenda para a próxima verificação
+    }
+  }, 120000); // verifica a cada 2 minutos
+}
 
 // Retorna o primeiro nome do usuário, com fallbacks progressivos
 function getFirstName(user) {
@@ -1684,7 +1716,7 @@ async function doLogin(e) {
   showLoading('Entrando');
   try {
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 15000)
+      setTimeout(() => reject(new Error('timeout')), 20000)
     );
     const { error } = await Promise.race([
       sb.auth.signInWithPassword({ email, password: pw }),
@@ -1818,7 +1850,7 @@ async function doNewPassword(e) {
   showLoading('Salvando');
   try {
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 15000)
+      setTimeout(() => reject(new Error('timeout')), 20000)
     );
     const { error } = await Promise.race([
       sb.auth.updateUser({ password: pw }),
