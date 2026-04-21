@@ -2,6 +2,7 @@
   "name": "sktcg-site",
   "version": "1.0.0",
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.0"
+    "@supabase/supabase-js": "^2.49.0",
+    "resend": "^4.0.0"
   }
 }

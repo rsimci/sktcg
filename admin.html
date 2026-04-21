@@ -582,6 +582,9 @@ async function handleRoute() {
   if (name === 'produtos') {
     showView('produtos');
     await loadProducts();
+  } else if (name === 'pedidos' && id) {
+    showView('pedido-detalhe');
+    await loadOrderDetail(id);
   } else if (name === 'pedidos') {
     showView('pedidos');
     await loadOrders();
