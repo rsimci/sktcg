@@ -167,6 +167,13 @@ ul{list-style:none;}
 .product-stock.low::before{background:var(--gold);}
 .product-stock.out{color:var(--red);}
 .product-stock.out::before{background:var(--red);}
+.btn-heart{position:absolute;top:10px;right:10px;z-index:2;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;transition:var(--transition);border:none;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.08);}
+.btn-heart:hover{background:var(--white);transform:scale(1.1);}
+.btn-heart svg{width:14px;height:14px;transition:var(--transition);}
+.btn-heart:not(.fav) svg{stroke:var(--gray-400);fill:none;}
+.btn-heart.fav svg{stroke:#E53E3E;fill:#E53E3E;}
+.btn-secondary.fav{border-color:#E53E3E;}
+.btn-secondary.fav svg{stroke:#E53E3E;fill:#E53E3E;}
 
 /* ===== FEATURED BANNER ===== */
 .featured-banner{padding:80px 0;}
@@ -1196,6 +1203,9 @@ function renderProductCard(p){
     <div class="product-card" onclick="navigate('detail','${p.id}')">
       <div class="product-img">
         ${badgeHTML}
+        <button class="btn-heart ${wishlist.has(p.id)?'fav':''}" data-heart="${p.id}" onclick="event.stopPropagation();toggleFavorite('${p.id}');" title="Favoritar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </button>
         ${getProductImage(p)}
       </div>
       <div class="product-info">
@@ -1363,7 +1373,7 @@ function showDetail(productId){
       <button class="btn-primary" onclick="addToCart('${p.id}', qty)" ${isOut?'disabled style="opacity:0.5;cursor:not-allowed;"':''}>
         ${isOut ? 'Indisponível' : 'Adicionar ao Carrinho'}
       </button>
-      <button class="btn-secondary">
+      <button class="btn-secondary ${wishlist.has(p.id)?'fav':''}" data-heart="${p.id}" onclick="toggleFavorite('${p.id}')" title="Favoritar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
     </div>`;
@@ -1718,8 +1728,12 @@ sb.auth.onAuthStateChange((event, session) => {
 
     // Busca perfil completo fora do lock (setTimeout garante que initialize() já liberou)
     setTimeout(() => _loadUserProfile(uid, email, session.user.user_metadata), 0);
+    // Carrega wishlist do usuário
+    setTimeout(() => loadWishlist(), 0);
   } else {
     currentUser = null;
+    wishlist = new Set();
+    _updateAllHearts();
     if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; } // cancela refresh
 
     if (_hasAuthCode && event === 'INITIAL_SESSION') {
@@ -2132,6 +2146,7 @@ function showAccountSection(section) {
   if (section === 'profile') loadProfileForm();
   if (section === 'addresses') renderAddresses();
   if (section === 'orders') loadOrders();
+  if (section === 'favorites') loadFavorites();
 }
 
 async function loadOrders() {
@@ -2194,6 +2209,57 @@ async function loadOrders() {
   }).join('');
 
   el.innerHTML = `<h2>Meus Pedidos</h2>${cards}`;
+}
+
+// ===== WISHLIST =====
+let wishlist = new Set();
+
+async function loadWishlist() {
+  if (!currentUser) { wishlist = new Set(); _updateAllHearts(); return; }
+  const { data } = await sb.from('wishlist').select('product_id');
+  wishlist = new Set((data || []).map(r => r.product_id));
+  _updateAllHearts();
+}
+
+function _updateAllHearts() {
+  document.querySelectorAll('[data-heart]').forEach(btn => {
+    const pid = btn.dataset.heart;
+    const isFav = wishlist.has(pid);
+    btn.classList.toggle('fav', isFav);
+  });
+}
+
+async function toggleFavorite(productId) {
+  if (!currentUser) { openAuth('login'); return; }
+  const isFav = wishlist.has(productId);
+  if (isFav) {
+    wishlist.delete(productId);
+    await sb.from('wishlist').delete().eq('product_id', productId);
+  } else {
+    wishlist.add(productId);
+    await sb.from('wishlist').insert({ user_id: currentUser.id, product_id: productId });
+  }
+  document.querySelectorAll(`[data-heart="${productId}"]`).forEach(btn => {
+    btn.classList.toggle('fav', wishlist.has(productId));
+  });
+}
+
+async function loadFavorites() {
+  const el = document.getElementById('acc-favorites');
+  if (!el || !currentUser) return;
+  el.innerHTML = '<h2>Favoritos</h2><p style="font-size:13px;color:var(--gray-400);padding:20px 0;">Carregando...</p>';
+  const { data } = await sb.from('wishlist').select('product_id').order('created_at', { ascending: false });
+  const ids = (data || []).map(r => r.product_id);
+  const favProducts = products.filter(p => ids.includes(p.id));
+  if (!favProducts.length) {
+    el.innerHTML = `<h2>Favoritos</h2>
+      <div class="acc-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <p>Nenhum produto favoritado ainda.</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `<h2>Favoritos</h2><div class="product-grid" style="margin-top:20px;">${favProducts.map(renderProductCard).join('')}</div>`;
 }
 
 function loadProfileForm() {
