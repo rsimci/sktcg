@@ -409,6 +409,26 @@ ul{list-style:none;}
 .add-address-form{border:1px solid var(--gray-200);border-radius:var(--radius);padding:24px;margin-top:20px;display:none;}
 .add-address-form.open{display:block;}
 .account-name-chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:400;color:var(--gray-700);}
+
+/* ===== CHECKOUT SUCCESS ===== */
+.success-page{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:60px 24px;}
+.success-card{max-width:480px;width:100%;text-align:center;}
+.success-icon{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 32px;transition:var(--transition);}
+.success-icon.approved{background:var(--navy);}
+.success-icon.pending{background:var(--gold);}
+.success-label{font-size:11px;font-weight:400;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;}
+.success-label.approved{color:var(--purple);}
+.success-label.pending{color:var(--gold);}
+.success-title{font-size:28px;font-weight:300;color:var(--navy);margin-bottom:10px;letter-spacing:0.5px;line-height:1.3;}
+.success-order-num{font-size:12px;font-weight:400;color:var(--gray-400);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:24px;}
+.success-order-num span{font-weight:600;color:var(--navy);}
+.success-msg{font-size:14px;font-weight:300;color:var(--gray-500);line-height:1.9;margin-bottom:40px;}
+.success-actions{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.btn-success-primary{background:var(--purple);color:var(--white);border:none;border-radius:8px;padding:14px 36px;font-size:13px;font-weight:400;cursor:pointer;letter-spacing:0.5px;width:100%;max-width:300px;transition:opacity 0.2s;font-family:inherit;}
+.btn-success-primary:hover{opacity:.85;}
+.btn-success-secondary{background:transparent;color:var(--navy);border:1px solid var(--gray-200);border-radius:8px;padding:12px 36px;font-size:13px;font-weight:300;cursor:pointer;letter-spacing:0.5px;width:100%;max-width:300px;transition:var(--transition);font-family:inherit;}
+.btn-success-secondary:hover{border-color:var(--navy);color:var(--navy);}
+.success-divider{width:40px;height:1px;background:var(--gray-200);margin:0 auto 32px;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -834,6 +854,26 @@ ul{list-style:none;}
   </div>
 </div>
 
+<!-- CHECKOUT SUCCESS PAGE -->
+<div class="page" id="page-checkout-success">
+  <div class="success-page">
+    <div class="success-card">
+      <div class="success-icon approved" id="successIcon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <p class="success-label approved" id="successLabel">Compra Confirmada</p>
+      <h1 class="success-title" id="successTitle">Obrigado pela sua compra!</h1>
+      <p class="success-order-num" id="successOrderNum"></p>
+      <div class="success-divider"></div>
+      <p class="success-msg" id="successMsg">Seu pedido foi recebido e está sendo preparado com cuidado.<br>Você receberá um e-mail de confirmação em instantes.</p>
+      <div class="success-actions">
+        <button class="btn-success-primary" onclick="navigate('account','orders')">Ver meus pedidos</button>
+        <button class="btn-success-secondary" onclick="navigate('home')">Continuar comprando</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- AUTH MODAL -->
 <div class="auth-modal" id="authModal" onclick="handleAuthOverlayClick(event)">
   <div class="auth-modal-box">
@@ -1228,6 +1268,9 @@ function navigate(page, param){
   }
   else if(page==='detail'){
     showDetail(param);
+  }
+  else if(page==='checkout-success'){
+    document.getElementById('page-checkout-success').classList.add('active');
   }
   else if(page==='confirm-email'){
     document.getElementById('page-confirm-email').classList.add('active');
@@ -2357,23 +2400,50 @@ async function init(){
 
   // Retorno do Mercado Pago após pagamento
   const _checkoutStatus = new URLSearchParams(window.location.search).get('checkout_status');
+  const _checkoutOrderId = new URLSearchParams(window.location.search).get('order_id');
   if (_checkoutStatus) {
-    // Limpa os parâmetros da URL sem recarregar a página
     window.history.replaceState({}, document.title, window.location.pathname);
 
-    if (_checkoutStatus === 'approved') {
-      // Limpa o carrinho e o localStorage
+    if (_checkoutStatus === 'approved' || _checkoutStatus === 'pending') {
       cart = [];
       try { localStorage.removeItem('sktcg_cart'); } catch(e) {}
       renderCart();
-      showToast('Pagamento aprovado! 🎉', 'Seu pedido foi confirmado. Obrigado pela compra!', 'success', 7000);
-      setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 1500);
-    } else if (_checkoutStatus === 'pending') {
-      cart = [];
-      try { localStorage.removeItem('sktcg_cart'); } catch(e) {}
-      renderCart();
-      showToast('Pagamento em análise', 'Seu pedido está sendo processado. Você receberá uma confirmação em breve.', 'info', 7000);
-      setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 1500);
+
+      const isApproved = _checkoutStatus === 'approved';
+      const firstName = currentUser ? getFirstName(currentUser) : null;
+
+      // Ícone
+      const iconEl = document.getElementById('successIcon');
+      iconEl.className = 'success-icon ' + (isApproved ? 'approved' : 'pending');
+      iconEl.innerHTML = isApproved
+        ? '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+
+      // Label e título
+      const labelEl = document.getElementById('successLabel');
+      labelEl.className = 'success-label ' + (isApproved ? 'approved' : 'pending');
+      labelEl.textContent = isApproved ? 'Compra Confirmada' : 'Pagamento em Análise';
+
+      document.getElementById('successTitle').textContent = firstName
+        ? `Obrigado, ${firstName}!`
+        : 'Obrigado pela sua compra!';
+
+      // Número do pedido
+      const orderNumEl = document.getElementById('successOrderNum');
+      if (_checkoutOrderId) {
+        const shortId = _checkoutOrderId.split('-')[0].toUpperCase();
+        orderNumEl.innerHTML = `Pedido <span>#${shortId}</span>`;
+      } else {
+        orderNumEl.textContent = '';
+      }
+
+      // Mensagem
+      document.getElementById('successMsg').innerHTML = isApproved
+        ? 'Seu pedido foi recebido e está sendo preparado com cuidado.<br>Você receberá um e-mail de confirmação em instantes.'
+        : 'Seu pedido está sendo processado.<br>Você receberá uma confirmação assim que o pagamento for aprovado.';
+
+      navigate('checkout-success');
+
     } else if (_checkoutStatus === 'rejected') {
       showToast('Pagamento não aprovado', 'Tente novamente com outro método de pagamento.', 'error', 7000);
     }
