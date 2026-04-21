@@ -278,6 +278,10 @@ ul{list-style:none;}
 .cart-item-qty{font-size:12px;color:var(--gray-500);}
 .cart-item-remove{font-size:11px;color:var(--gray-400);cursor:pointer;transition:var(--transition);}
 .cart-item-remove:hover{color:var(--red);}
+.cart-qty-ctrl{display:flex;align-items:center;gap:8px;}
+.cart-qty-btn{width:24px;height:24px;border-radius:50%;background:var(--gray-100);border:none;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:var(--transition);color:var(--navy);flex-shrink:0;}
+.cart-qty-btn:hover{background:var(--gray-200);}
+.cart-qty-num{font-size:13px;font-weight:500;min-width:18px;text-align:center;}
 .cart-footer{padding:24px;border-top:1px solid var(--gray-200);}
 .cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
 .cart-total-label{font-size:14px;font-weight:400;color:var(--gray-600);}
@@ -1365,7 +1369,25 @@ function removeFromCart(id){
   renderCart();
 }
 
+function updateCartQty(id, delta){
+  const item = cart.find(x => x.id === id);
+  if (!item) return;
+  const p = products.find(x => x.id === id);
+  const stockQty = p ? Number(p.stockQty ?? 0) : 99;
+  const newQty = item.qty + delta;
+  if (newQty <= 0) { removeFromCart(id); return; }
+  if (newQty > stockQty) {
+    showToast('Estoque limitado', `Máximo de ${stockQty} unidade(s) disponível.`, 'info', 3000);
+    return;
+  }
+  item.qty = newQty;
+  renderCart();
+}
+
+function saveCart(){ try { localStorage.setItem('sktcg_cart', JSON.stringify(cart)); } catch(e){} }
+
 function renderCart(){
+  saveCart();
   const totalQty = cart.reduce((s, c) => s + c.qty, 0);
   document.getElementById('cartCount').textContent = totalQty;
 
@@ -1399,7 +1421,11 @@ function renderCart(){
         <div class="cart-item-edition">Pokémon TCG · ${p.edition}</div>
         <div class="cart-item-bottom">
           <span class="cart-item-price">R$ ${(p.price * c.qty).toFixed(2).replace('.',',')}</span>
-          <span class="cart-item-qty">Qtd: ${c.qty}</span>
+          <div class="cart-qty-ctrl">
+            <button class="cart-qty-btn" onclick="updateCartQty('${p.id}', -1)">−</button>
+            <span class="cart-qty-num">${c.qty}</span>
+            <button class="cart-qty-btn" onclick="updateCartQty('${p.id}', 1)">+</button>
+          </div>
         </div>
         <span class="cart-item-remove" onclick="removeFromCart('${p.id}')">Remover</span>
       </div>
@@ -2336,13 +2362,15 @@ async function init(){
     window.history.replaceState({}, document.title, window.location.pathname);
 
     if (_checkoutStatus === 'approved') {
-      // Limpa o carrinho
+      // Limpa o carrinho e o localStorage
       cart = [];
+      try { localStorage.removeItem('sktcg_cart'); } catch(e) {}
       renderCart();
       showToast('Pagamento aprovado! 🎉', 'Seu pedido foi confirmado. Obrigado pela compra!', 'success', 7000);
       setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 1500);
     } else if (_checkoutStatus === 'pending') {
       cart = [];
+      try { localStorage.removeItem('sktcg_cart'); } catch(e) {}
       renderCart();
       showToast('Pagamento em análise', 'Seu pedido está sendo processado. Você receberá uma confirmação em breve.', 'info', 7000);
       setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 1500);
@@ -2372,6 +2400,16 @@ async function init(){
       }));
     }
   } catch(e) { /* usa produtos hardcoded como fallback */ }
+
+  // Restaura carrinho salvo (persiste ao voltar do MP sem concluir)
+  try {
+    const saved = localStorage.getItem('sktcg_cart');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) { cart.length = 0; parsed.forEach(i => cart.push(i)); }
+    }
+  } catch(e) {}
+  renderCart();
 
   renderHome();
 }
