@@ -1433,8 +1433,7 @@ async function startCheckout() {
 
     if (!res.ok) throw new Error(data.error || 'Erro ao iniciar checkout');
 
-    // sandbox_init_point = testes | init_point = produção
-    const checkoutUrl = data.sandbox_init_point || data.init_point;
+    const checkoutUrl = data.init_point;
     window.location.href = checkoutUrl;
 
   } catch (err) {
