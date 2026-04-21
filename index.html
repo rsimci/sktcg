@@ -386,6 +386,22 @@ ul{list-style:none;}
 .acc-address-actions button.del{color:var(--red);}
 .acc-orders-empty{text-align:center;padding:60px 20px;}
 .acc-orders-empty svg{opacity:.12;margin:0 auto 16px;}
+.order-card{border:1px solid var(--gray-200);border-radius:12px;padding:20px;margin-bottom:16px;background:var(--white);}
+.order-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;}
+.order-meta{display:flex;flex-direction:column;gap:2px;}
+.order-id{font-size:13px;font-weight:600;color:var(--navy);}
+.order-date{font-size:11px;font-weight:300;color:var(--gray-400);}
+.order-status{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.order-status.pending{background:#FEF3C7;color:#92400E;}
+.order-status.approved{background:#D1FAE5;color:#065F46;}
+.order-status.shipped{background:#DBEAFE;color:#1E40AF;}
+.order-status.delivered{background:#D1FAE5;color:#065F46;}
+.order-status.cancelled{background:#FEE2E2;color:#991B1B;}
+.order-status.refunded{background:var(--gray-100);color:var(--gray-500);}
+.order-items-list{font-size:12px;font-weight:300;color:var(--gray-500);margin-bottom:12px;line-height:1.6;}
+.order-card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--gray-100);}
+.order-total{font-size:15px;font-weight:600;}
+.order-total-label{font-size:11px;font-weight:300;color:var(--gray-400);}
 .add-address-form{border:1px solid var(--gray-200);border-radius:var(--radius);padding:24px;margin-top:20px;display:none;}
 .add-address-form.open{display:block;}
 .account-name-chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:400;color:var(--gray-700);}
@@ -1442,6 +1458,15 @@ async function startCheckout() {
   }
 }
 
+// Quando o usuário volta do MP pelo botão "voltar" do browser,
+// o bfcache restaura a página com o botão travado — resetamos aqui.
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) {
+    const btn = document.getElementById('checkoutBtn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
+  }
+});
+
 // ===== UI HELPERS =====
 function toggleSearch(){
   document.getElementById('searchOverlay').classList.toggle('active');
@@ -2037,6 +2062,69 @@ function showAccountSection(section) {
 
   if (section === 'profile') loadProfileForm();
   if (section === 'addresses') renderAddresses();
+  if (section === 'orders') loadOrders();
+}
+
+async function loadOrders() {
+  const el = document.getElementById('acc-orders');
+  if (!el || !currentUser) return;
+
+  el.innerHTML = '<h2>Meus Pedidos</h2><p style="font-size:13px;color:var(--gray-400);padding:20px 0;">Carregando...</p>';
+
+  const { data: orders, error } = await sb
+    .from('orders')
+    .select('*, order_items(name, qty, price)')
+    .order('created_at', { ascending: false });
+
+  if (error || !orders) {
+    el.innerHTML = '<h2>Meus Pedidos</h2><p style="font-size:13px;color:var(--gray-400);padding:20px 0;">Erro ao carregar pedidos.</p>';
+    return;
+  }
+
+  const statusLabel = {
+    pending:   'Aguardando pagamento',
+    approved:  'Pago',
+    shipped:   'Enviado',
+    delivered: 'Entregue',
+    cancelled: 'Cancelado',
+    refunded:  'Reembolsado',
+  };
+
+  const formatDate = iso => new Date(iso).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+  if (orders.length === 0) {
+    el.innerHTML = `<h2>Meus Pedidos</h2>
+      <div class="acc-orders-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <p style="font-size:14px;font-weight:300;color:var(--gray-400);margin-bottom:20px;">Você ainda não fez nenhum pedido.</p>
+        <button class="auth-btn" style="display:inline-block;width:auto;padding:12px 32px;" onclick="navigate('all')">Ver produtos</button>
+      </div>`;
+    return;
+  }
+
+  const cards = orders.map(o => {
+    const shortId = o.id.split('-')[0].toUpperCase();
+    const label   = statusLabel[o.status] || o.status;
+    const items   = (o.order_items || []).map(i => `${i.name} (x${i.qty})`).join(', ');
+    const total   = parseFloat(o.total || 0).toFixed(2).replace('.', ',');
+    return `
+      <div class="order-card">
+        <div class="order-card-header">
+          <div class="order-meta">
+            <span class="order-id">Pedido #${shortId}</span>
+            <span class="order-date">${formatDate(o.created_at)}</span>
+          </div>
+          <span class="order-status ${o.status}">${label}</span>
+        </div>
+        <div class="order-items-list">${items || '—'}</div>
+        <div class="order-card-footer">
+          <span class="order-total-label">Total</span>
+          <span class="order-total">R$ ${total}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `<h2>Meus Pedidos</h2>${cards}`;
 }
 
 function loadProfileForm() {
@@ -2248,11 +2336,16 @@ async function init(){
     window.history.replaceState({}, document.title, window.location.pathname);
 
     if (_checkoutStatus === 'approved') {
+      // Limpa o carrinho
+      cart = [];
+      renderCart();
       showToast('Pagamento aprovado! 🎉', 'Seu pedido foi confirmado. Obrigado pela compra!', 'success', 7000);
-      // Navega para Meus Pedidos assim que o usuário carregar
-      setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 2500);
+      setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 1500);
     } else if (_checkoutStatus === 'pending') {
+      cart = [];
+      renderCart();
       showToast('Pagamento em análise', 'Seu pedido está sendo processado. Você receberá uma confirmação em breve.', 'info', 7000);
+      setTimeout(() => { if (currentUser) navigate('account', 'orders'); }, 1500);
     } else if (_checkoutStatus === 'rejected') {
       showToast('Pagamento não aprovado', 'Tente novamente com outro método de pagamento.', 'error', 7000);
     }

@@ -127,7 +127,9 @@ module.exports = async (req, res) => {
       pending: `${siteUrl}/?checkout_status=pending&order_id=${order.id}`,
     },
     auto_return: 'approved',
-    notification_url: `${siteUrl}/api/mp-webhook?x-vercel-protection-bypass=${process.env.VERCEL_AUTOMATION_BYPASS_SECRET}`,
+    notification_url: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? `${siteUrl}/api/mp-webhook?x-vercel-protection-bypass=${process.env.VERCEL_AUTOMATION_BYPASS_SECRET}`
+      : `${siteUrl}/api/mp-webhook`,
     payment_methods: {
       installments: 12,
     },
