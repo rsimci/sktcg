@@ -101,7 +101,7 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
 .nav-link:hover{color:var(--white)}
 .nav-link.has-dropdown::after{content:"";display:inline-block;width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-left:6px;margin-bottom:2px;opacity:0.5}
 .nav-link.has-dropdown{position:relative}
-.dropdown{position:absolute;top:calc(100% + 10px);left:-16px;background:var(--navy);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px;min-width:240px;box-shadow:0 20px 60px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transform:translateY(6px);transition:var(--transition);z-index:100}
+.dropdown{position:absolute;top:100%;left:-16px;background:var(--navy);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px;padding-top:18px;min-width:240px;box-shadow:0 20px 60px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transform:translateY(0);transition:var(--transition);z-index:100}
 .nav-link.has-dropdown:hover .dropdown{opacity:1;pointer-events:all;transform:translateY(0)}
 .dropdown a{display:block;padding:10px 14px;font-size:13px;font-weight:300;color:var(--text-dim);border-radius:8px}
 .dropdown a:hover{background:var(--navy-2);color:var(--white)}
