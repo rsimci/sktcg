@@ -2844,6 +2844,11 @@ function openAuth(tab) {
   document.body.style.overflow = 'hidden';
 }
 function closeAuth() {
+  // Se estiver no fluxo de recovery e fechar sem trocar a senha, encerra a sessão temporária
+  const isRecoveryModal = document.getElementById('form-newpassword')?.style.display !== 'none';
+  if (_isPasswordRecovery && isRecoveryModal) {
+    sb.auth.signOut();
+  }
   document.getElementById('authModal').classList.remove('active');
   document.body.style.overflow = '';
   // limpar erros
