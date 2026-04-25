@@ -2598,6 +2598,7 @@ function _sbFetch(input, init) {
 // processa e limpa a URL durante a inicialização assíncrona. Nossa leitura síncrona
 // acontece antes, garantindo que o flag esteja disponível para o onAuthStateChange.
 const _hasAuthCode = !!new URLSearchParams(window.location.search).get('code');
+const _isPasswordRecovery = new URLSearchParams(window.location.search).get('type') === 'recovery';
 
 const sb = createClient(
   'https://ytllbniiujsfyvmotvfh.supabase.co',
@@ -2681,7 +2682,7 @@ async function _loadUserProfile(uid, email, metadata) {
 
 sb.auth.onAuthStateChange((event, session) => {
   // Usuário chegou pelo link de redefinição de senha
-  if (event === 'PASSWORD_RECOVERY') {
+  if (event === 'PASSWORD_RECOVERY' || (session?.user && _isPasswordRecovery)) {
     hideLoading();
     switchTab('newpassword');
     document.getElementById('authModal').classList.add('active');
@@ -2705,7 +2706,7 @@ sb.auth.onAuthStateChange((event, session) => {
 
     _scheduleTokenRefresh(); // inicia/renova o timer de refresh preventivo
 
-    if (_hasAuthCode && event === 'SIGNED_IN') {
+    if (_hasAuthCode && !_isPasswordRecovery && event === 'SIGNED_IN') {
       // Troca PKCE bem-sucedida nesta aba: e-mail confirmado → boas-vindas
       hideLoading();
       sessionStorage.removeItem('sktcg_confirm_email');
@@ -3009,7 +3010,7 @@ async function doRecover(e) {
   err.textContent = ''; ok.textContent = '';
   try {
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname
+      redirectTo: window.location.origin + window.location.pathname + '?type=recovery'
     });
     if (error) throw error;
     closeAuth();
