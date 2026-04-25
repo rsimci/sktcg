@@ -2935,4 +2935,631 @@ async function doRegister(e) {
   const phone = document.getElementById('reg-phone').value.trim();
   const cpf   = document.getElementById('reg-cpf').value.trim();
   const address = {
-   
+    cep:          document.getElementById('reg-cep').value.trim(),
+    street:       document.getElementById('reg-street').value.trim(),
+    number:       document.getElementById('reg-number').value.trim(),
+    complement:   document.getElementById('reg-complement').value.trim(),
+    neighborhood: document.getElementById('reg-neighborhood').value.trim(),
+    city:         document.getElementById('reg-city').value.trim(),
+    state:        document.getElementById('reg-state').value.trim(),
+  };
+  // Validações JS (backup além do required do HTML)
+  if (!name)  { err.textContent = 'Preencha seu nome completo.'; return; }
+  if (!email) { err.textContent = 'Preencha seu e-mail.'; return; }
+  if (pw.length < 8) { err.textContent = 'A senha deve ter no mínimo 8 caracteres.'; return; }
+
+  // Telefone: mínimo 10 dígitos (com DDD)
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length < 10) { err.textContent = 'Preencha um telefone válido com DDD.'; return; }
+
+  // CPF: deve ter 11 dígitos
+  const cpfDigits = cpf.replace(/\D/g, '');
+  if (cpfDigits.length !== 11) { err.textContent = 'CPF inválido. Digite os 11 dígitos.'; return; }
+
+  // Endereço: campos obrigatórios
+  if (!address.cep || address.cep.replace(/\D/g,'').length < 8) { err.textContent = 'Preencha um CEP válido.'; return; }
+  if (!address.street)       { err.textContent = 'Preencha o logradouro.'; return; }
+  if (!address.number)       { err.textContent = 'Preencha o número.'; return; }
+  if (!address.neighborhood) { err.textContent = 'Preencha o bairro.'; return; }
+  if (!address.city)         { err.textContent = 'Preencha a cidade.'; return; }
+  if (!address.state || address.state.length !== 2) { err.textContent = 'Preencha a UF com 2 letras (ex: SP).'; return; }
+
+  const btn = e.target.querySelector('.auth-btn');
+  if (btn) { btn.textContent = 'Criando conta...'; btn.disabled = true; }
+  showLoading('Criando conta');
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password: pw, options: { data: { name } } });
+    if (error) throw error;
+    if (data.session) {
+      // Sessão ativa imediatamente (confirmação de e-mail desativada) — salva tudo agora
+      const uid = data.user.id;
+      await sb.from('profiles').upsert({ id: uid, name, phone, cpf });
+      await sb.from('addresses').insert({ user_id: uid, ...address, label: 'Principal' });
+    } else {
+      // Confirmação de e-mail necessária — guarda dados temporariamente para salvar no primeiro login
+      const pending = { name, phone, cpf, address };
+      localStorage.setItem('sktcg_pending_profile_' + email, JSON.stringify(pending));
+    }
+    hideLoading();
+    closeAuth();
+    if (data.session) {
+      showToast('Bem-vindo à SK TCG!', 'Sua conta foi criada com sucesso.', 'success');
+    } else {
+      sessionStorage.setItem('sktcg_confirm_email', email);
+      navigate('confirm-email');
+    }
+  } catch(ex) {
+    hideLoading();
+    const msg = ex?.message || '';
+    if (msg.includes('already registered') || msg.includes('User already registered') || msg.includes('email address is already registered')) {
+      err.textContent = 'Este e-mail já está cadastrado. Tente fazer login.';
+    } else {
+      err.textContent = msg || 'Erro ao criar conta. Tente novamente.';
+    }
+  } finally {
+    if (btn) { btn.textContent = 'Criar Conta'; btn.disabled = false; }
+  }
+}
+
+async function doRecover(e) {
+  e.preventDefault();
+  const email = document.getElementById('recover-email').value.trim();
+  const err = document.getElementById('recover-err');
+  const ok = document.getElementById('recover-ok');
+  err.textContent = ''; ok.textContent = '';
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    closeAuth();
+    showToast('Link enviado!', 'Verifique sua caixa de entrada. Caso não encontre, cheque a pasta de spam.', 'success', 5000);
+  } catch(ex) { err.textContent = ex.message; }
+}
+
+async function doNewPassword(e) {
+  e.preventDefault();
+  const pw = document.getElementById('newpass-password').value;
+  const pw2 = document.getElementById('newpass-password2').value;
+  const err = document.getElementById('newpass-err');
+  const ok = document.getElementById('newpass-ok');
+  const btn = e.target.querySelector('.auth-btn');
+  err.textContent = ''; ok.textContent = '';
+  if (pw.length < 8) { err.textContent = 'A senha deve ter no mínimo 8 caracteres.'; return; }
+  if (pw !== pw2) { err.textContent = 'As senhas não conferem.'; return; }
+  if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
+  showLoading('Salvando');
+  try {
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 20000)
+    );
+    const { error } = await Promise.race([
+      sb.auth.updateUser({ password: pw }),
+      timeout
+    ]);
+    if (error) throw error;
+    if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
+    hideLoading();
+    closeAuth();
+    showToast('Senha redefinida!', 'Sua nova senha foi salva com sucesso.', 'success');
+    setTimeout(() => navigate('home'), 1000);
+  } catch(ex) {
+    hideLoading();
+    const msg = ex?.message || ex?.error_description || '';
+    if (msg === 'timeout') {
+      err.textContent = 'Tempo limite excedido. Solicite um novo link de recuperação e tente novamente.';
+    } else {
+      err.textContent = msg || 'Erro ao redefinir senha. Solicite um novo link de recuperação.';
+    }
+  } finally {
+    if (btn) { btn.textContent = 'Salvar nova senha'; btn.disabled = false; }
+  }
+}
+
+async function checkEmailConfirmed() {
+  // Verifica se a sessão já existe — o que acontece quando o usuário confirma o e-mail
+  // no mesmo navegador (a aba da confirmação sincroniza a sessão via localStorage).
+  // Se já está logado, vai direto para a home. Caso contrário, abre o login manual.
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    navigate('home');
+  } else {
+    openAuth('login');
+  }
+}
+
+async function resendConfirmEmail() {
+  const email = sessionStorage.getItem('sktcg_confirm_email');
+  const btn = document.getElementById('btn-resend');
+  if (!email) { showToast('E-mail não encontrado', 'Tente fazer o cadastro novamente.', 'error'); return; }
+  if (btn) { btn.textContent = 'Enviando...'; btn.disabled = true; }
+  try {
+    const { error } = await sb.auth.resend({ type: 'signup', email });
+    if (error) throw error;
+    showToast('E-mail reenviado!', 'Verifique sua caixa de entrada e a pasta de spam.', 'success', 6000);
+  } catch(ex) {
+    showToast('Erro ao reenviar', ex?.message || 'Tente novamente em alguns minutos.', 'error');
+  } finally {
+    if (btn) { btn.textContent = 'Reenviar e-mail'; btn.disabled = false; }
+  }
+}
+
+async function doLogout() {
+  currentUser = null;
+  updateAuthUI();
+  navigate('home');
+  sb.auth.signOut(); // não precisa await — UI já foi atualizada
+  showToast('Até logo!', 'Você saiu da sua conta com sucesso.', 'info', 4000);
+}
+
+// ===== UI AUTH =====
+function updateAuthUI() {
+  const user = currentUser;
+  const accountBtn = document.querySelector('.account-btn');
+  if (!accountBtn) return;
+  const svgEl = accountBtn.querySelector('svg');
+  const nameEl = document.getElementById('auth-username');
+  if (nameEl) nameEl.remove();
+  const dropdown = accountBtn.querySelector('.account-dropdown');
+
+  if (user) {
+    if (svgEl) svgEl.style.display = 'none';
+    const span = document.createElement('span');
+    span.id = 'auth-username';
+    span.style.cssText = 'font-size:13px;font-weight:400;color:var(--gray-700);';
+    span.textContent = getFirstName(user);
+    accountBtn.insertBefore(span, dropdown);
+    dropdown.innerHTML = `
+      <div style="padding:10px 20px 6px;font-size:11px;font-weight:300;color:var(--gray-400);letter-spacing:0.5px;">${user.email}</div>
+      <div class="dropdown-divider"></div>
+      <a href="#" onclick="closeAccountDropdown();navigate('account');return false;">Minha Conta</a>
+      <a href="#" onclick="closeAccountDropdown();navigate('account');showAccountSection('orders');return false;">Meus Pedidos</a>
+      <a href="#" onclick="closeAccountDropdown();navigate('account');showAccountSection('favorites');return false;">Favoritos</a>
+      <div class="dropdown-divider"></div>
+      <a href="#" onclick="closeAccountDropdown();doLogout();return false;" style="color:var(--red);">Sair</a>
+    `;
+  } else {
+    if (svgEl) svgEl.style.display = '';
+    dropdown.innerHTML = `
+      <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Entrar</a>
+      <a href="#" onclick="closeAccountDropdown();openAuth('register');return false;">Criar Conta</a>
+      <div class="dropdown-divider"></div>
+      <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Meus Pedidos</a>
+      <a href="#" onclick="closeAccountDropdown();openAuth('login');return false;">Favoritos</a>
+    `;
+  }
+}
+
+// ===== ÁREA DO CLIENTE =====
+function showAccountSection(section) {
+  ['orders','favorites','profile','addresses'].forEach(s => {
+    const sec = document.getElementById('acc-'+s);
+    const nav = document.getElementById('accNav-'+s);
+    if (sec) sec.classList.remove('active');
+    if (nav) nav.classList.remove('active');
+  });
+  const el = document.getElementById('acc-'+section);
+  const nav = document.getElementById('accNav-'+section);
+  if (el) el.classList.add('active');
+  if (nav) nav.classList.add('active');
+
+  if (section === 'profile') loadProfileForm();
+  if (section === 'addresses') renderAddresses();
+  if (section === 'orders') loadOrders();
+  if (section === 'favorites') loadFavorites();
+}
+
+async function loadOrders() {
+  const el = document.getElementById('acc-orders');
+  if (!el || !currentUser) return;
+
+  el.innerHTML = '<h2>Meus Pedidos</h2><p style="font-size:13px;color:var(--gray-400);padding:20px 0;">Carregando...</p>';
+
+  const { data: orders, error } = await sb
+    .from('orders')
+    .select('*, order_items(name, qty, price)')
+    .order('created_at', { ascending: false });
+
+  if (error || !orders) {
+    el.innerHTML = '<h2>Meus Pedidos</h2><p style="font-size:13px;color:var(--gray-400);padding:20px 0;">Erro ao carregar pedidos.</p>';
+    return;
+  }
+
+  const statusLabel = {
+    pending:   'Aguardando pagamento',
+    approved:  'Pago',
+    shipped:   'Enviado',
+    delivered: 'Entregue',
+    cancelled: 'Cancelado',
+    refunded:  'Reembolsado',
+  };
+
+  const formatDate = iso => new Date(iso).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+  if (orders.length === 0) {
+    el.innerHTML = `<h2>Meus Pedidos</h2>
+      <div class="acc-orders-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <p style="font-size:14px;font-weight:300;color:var(--gray-400);margin-bottom:20px;">Você ainda não fez nenhum pedido.</p>
+        <button class="auth-btn" style="display:inline-block;width:auto;padding:12px 32px;" onclick="navigate('all')">Ver produtos</button>
+      </div>`;
+    return;
+  }
+
+  const cards = orders.map(o => {
+    const shortId = o.id.split('-')[0].toUpperCase();
+    const label   = statusLabel[o.status] || o.status;
+    const items   = (o.order_items || []).map(i => `${i.name} (x${i.qty})`).join(', ');
+    const total   = parseFloat(o.total || 0).toFixed(2).replace('.', ',');
+    return `
+      <div class="order-card">
+        <div class="order-card-header">
+          <div class="order-meta">
+            <span class="order-id">Pedido #${shortId}</span>
+            <span class="order-date">${formatDate(o.created_at)}</span>
+          </div>
+          <span class="order-status ${o.status}">${label}</span>
+        </div>
+        <div class="order-items-list">${items || '—'}</div>
+        <div class="order-card-footer">
+          <span class="order-total-label">Total</span>
+          <span class="order-total">R$ ${total}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `<h2>Meus Pedidos</h2>${cards}`;
+}
+
+// ===== WISHLIST =====
+let wishlist = new Set();
+
+async function loadWishlist() {
+  if (!currentUser) { wishlist = new Set(); _updateAllHearts(); return; }
+  const { data } = await sb.from('wishlist').select('product_id');
+  wishlist = new Set((data || []).map(r => r.product_id));
+  _updateAllHearts();
+}
+
+function _updateAllHearts() {
+  document.querySelectorAll('[data-heart]').forEach(btn => {
+    const pid = btn.dataset.heart;
+    const isFav = wishlist.has(pid);
+    btn.classList.toggle('fav', isFav);
+  });
+}
+
+async function toggleFavorite(productId) {
+  if (!currentUser) { openAuth('login'); return; }
+  const isFav = wishlist.has(productId);
+  if (isFav) {
+    wishlist.delete(productId);
+    await sb.from('wishlist').delete().eq('product_id', productId);
+  } else {
+    wishlist.add(productId);
+    await sb.from('wishlist').insert({ user_id: currentUser.id, product_id: productId });
+  }
+  document.querySelectorAll(`[data-heart="${productId}"]`).forEach(btn => {
+    btn.classList.toggle('fav', wishlist.has(productId));
+  });
+}
+
+async function loadFavorites() {
+  const el = document.getElementById('acc-favorites');
+  if (!el || !currentUser) return;
+  el.innerHTML = '<h2>Favoritos</h2><p style="font-size:13px;color:var(--gray-400);padding:20px 0;">Carregando...</p>';
+  const { data } = await sb.from('wishlist').select('product_id').order('created_at', { ascending: false });
+  const ids = (data || []).map(r => r.product_id);
+  const favProducts = products.filter(p => ids.includes(p.id));
+  if (!favProducts.length) {
+    el.innerHTML = `<h2>Favoritos</h2>
+      <div class="acc-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <p>Nenhum produto favoritado ainda.</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `<h2>Favoritos</h2><div class="product-grid" style="margin-top:20px;">${favProducts.map(renderProductCard).join('')}</div>`;
+}
+
+function loadProfileForm() {
+  const user = currentUser;
+  if (!user) return;
+  document.getElementById('profile-name').value = user.name || '';
+  document.getElementById('profile-email').value = user.email || '';
+  document.getElementById('profile-phone').value = user.phone || '';
+  document.getElementById('profile-cpf').value = user.cpf || '';
+}
+
+async function saveProfile(e) {
+  e.preventDefault();
+  const user = currentUser;
+  if (!user) return;
+  const err = document.getElementById('profile-err');
+  const ok = document.getElementById('profile-ok');
+  err.textContent = ''; ok.textContent = '';
+  const newpw  = document.getElementById('profile-newpw').value;
+  const newpw2 = document.getElementById('profile-newpw2').value;
+  if (newpw && newpw !== newpw2) { err.textContent = 'As senhas não coincidem.'; return; }
+  const updates = {
+    name:  document.getElementById('profile-name').value.trim(),
+    phone: document.getElementById('profile-phone').value.trim(),
+    cpf:   document.getElementById('profile-cpf').value.trim(),
+  };
+  try {
+    await sb.from('profiles').update(updates).eq('id', user.id);
+    if (newpw) await sb.auth.updateUser({ password: newpw });
+    currentUser = { ...currentUser, ...updates };
+    updateAuthUI();
+    showToast('Dados salvos!', 'Suas informações foram atualizadas.', 'success');
+  } catch(ex) {
+    err.textContent = ex.message;
+  }
+}
+
+function renderAddresses() {
+  const user = currentUser;
+  const list = document.getElementById('addressesList');
+  if (!list) return;
+  const addresses = user ? (user.addresses || []) : [];
+  if (!addresses.length) {
+    list.innerHTML = '<p style="font-size:13px;font-weight:300;color:var(--gray-400);margin-bottom:16px;">Nenhum endereço cadastrado.</p>';
+    return;
+  }
+  list.innerHTML = addresses.map(a => `
+    <div class="acc-address-card">
+      <h4>${a.label || 'Endereço'}</h4>
+      <p>${a.street}${a.number ? ', '+a.number : ''}${a.complement ? ' — '+a.complement : ''}<br>${a.neighborhood ? a.neighborhood+', ' : ''}${a.city}${a.state ? ' — '+a.state : ''}<br>CEP: ${a.cep}</p>
+      <div class="acc-address-actions">
+        <button class="del" onclick="removeAddress('${a.id}')">Remover</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function removeAddress(addrId) {
+  const user = currentUser;
+  if (!user) return;
+  await sb.from('addresses').delete().eq('id', addrId).eq('user_id', user.id);
+  currentUser.addresses = (currentUser.addresses || []).filter(a => a.id !== addrId);
+  renderAddresses();
+}
+
+function toggleAddAddressForm() {
+  const form = document.getElementById('addAddressForm');
+  if (!form) return;
+  form.classList.toggle('open');
+}
+
+async function saveNewAddress(e) {
+  e.preventDefault();
+  const user = currentUser;
+  if (!user) return;
+  const addr = {
+    user_id:      user.id,
+    cep:          document.getElementById('adr-cep').value.trim(),
+    street:       document.getElementById('adr-street').value.trim(),
+    number:       document.getElementById('adr-number').value.trim(),
+    complement:   document.getElementById('adr-complement').value.trim(),
+    neighborhood: document.getElementById('adr-neighborhood').value.trim(),
+    city:         document.getElementById('adr-city').value.trim(),
+    state:        document.getElementById('adr-state').value.trim(),
+    label:        'Endereço ' + ((user.addresses||[]).length + 1)
+  };
+  const { data, error } = await sb.from('addresses').insert(addr).select().single();
+  if (!error && data) {
+    currentUser.addresses = [...(currentUser.addresses || []), data];
+  }
+  toggleAddAddressForm();
+  ['adr-cep','adr-street','adr-number','adr-complement','adr-neighborhood','adr-city','adr-state']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  renderAddresses();
+}
+
+// ===== CEP (ViaCEP) =====
+// Com Supabase, pode usar edge function para proxy do CEP
+async function fetchCEP(prefix) {
+  const cepEl = document.getElementById(prefix+'-cep');
+  if (!cepEl) return;
+  const cep = cepEl.value.replace(/\D/g, '');
+  if (cep.length !== 8) return;
+  try {
+    const res = await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+    const data = await res.json();
+    if (data.erro) { cepEl.style.borderColor = 'var(--red)'; return; }
+    cepEl.style.borderColor = '';
+    const set = (id, val) => { const el = document.getElementById(prefix+'-'+id); if(el && val) el.value = val; };
+    set('street', data.logradouro);
+    set('neighborhood', data.bairro);
+    set('city', data.localidade);
+    set('state', data.uf);
+  } catch(e) { /* silencioso — ViaCEP pode falhar offline */ }
+}
+
+// Máscara CEP
+document.addEventListener('input', function(e) {
+  if (e.target.id && e.target.id.endsWith('-cep')) {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.length > 5) v = v.slice(0,5)+'-'+v.slice(5,8);
+    e.target.value = v;
+  }
+  if (e.target.id && e.target.id.endsWith('-cpf')) {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.length > 3) v = v.slice(0,3)+'.'+v.slice(3);
+    if (v.length > 7) v = v.slice(0,7)+'.'+v.slice(7);
+    if (v.length > 11) v = v.slice(0,11)+'-'+v.slice(11,13);
+    e.target.value = v.slice(0,14);
+  }
+});
+
+// ESC fecha modal e dropdown
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeAuth();
+    closeAccountDropdown();
+  }
+});
+
+// ===== ACCOUNT DROPDOWN (click-toggle) =====
+function toggleAccountDropdown(e) {
+  e.stopPropagation();
+  const dropdown = document.querySelector('.account-dropdown');
+  if (!dropdown) return;
+  const isOpen = dropdown.classList.contains('open');
+  closeAccountDropdown();
+  if (!isOpen) dropdown.classList.add('open');
+}
+function closeAccountDropdown() {
+  const dropdown = document.querySelector('.account-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
+}
+// Fecha ao clicar fora
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.account-btn')) closeAccountDropdown();
+});
+
+function renderHome() {
+  document.getElementById('featuredGrid').innerHTML = products.map(renderProductCard).join('');
+  document.getElementById('editionsGrid').innerHTML = editions.map(e=>renderEditionCard(e,false)).join('');
+
+  const ahColor = editionColors['Ascended Heroes'];
+  const heroETB  = document.getElementById('heroETB');
+  const heroBox  = document.getElementById('heroBox');
+  const heroPack = document.getElementById('heroPack');
+  const srcAhETB  = products.find(p => p.ptype==='etb' && p.edition==='Ascended Heroes')?.img || IMG.ahETB;
+  const srcPoETB  = products.find(p => p.ptype==='etb' && p.edition==='Perfect Order')?.img  || IMG.poETB;
+  const srcBlister= products.find(p => p.category==='booster-packs')?.img || IMG.poBlister;
+
+  if(heroETB){
+    heroETB.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = srcAhETB; img.alt = 'ETB Ascended Heroes';
+    img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('etb', ahColor, 'Ascended Heroes'); };
+    heroETB.appendChild(img);
+  }
+  if(heroBox){
+    heroBox.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = srcPoETB; img.alt = 'ETB Perfect Order';
+    img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('etb', editionColors['Perfect Order'], 'Perfect Order'); };
+    heroBox.appendChild(img);
+  }
+  if(heroPack){
+    heroPack.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = srcBlister; img.alt = '3-Pack Blister Perfect Order';
+    img.style.cssText = 'width:100%;height:auto;object-fit:contain;';
+    img.onerror = function(){ this.parentElement.innerHTML = makeSVG('pack', editionColors['Perfect Order'], 'Perfect Order'); };
+    heroPack.appendChild(img);
+  }
+}
+
+async function init(){
+  updateAuthUI();
+
+  // Feedback imediato quando o usuário chega pelo link de confirmação de e-mail
+  if (_hasAuthCode) {
+    showToast('Verificando seu e-mail…', 'Aguarde um instante.', 'info', 2500);
+  }
+
+  // Retorno do Mercado Pago após pagamento
+  const _checkoutStatus = new URLSearchParams(window.location.search).get('checkout_status');
+  const _checkoutOrderId = new URLSearchParams(window.location.search).get('order_id');
+  if (_checkoutStatus) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if (_checkoutStatus === 'approved' || _checkoutStatus === 'pending') {
+      cart = [];
+      try { localStorage.removeItem('sktcg_cart'); } catch(e) {}
+      renderCart();
+
+      const isApproved = _checkoutStatus === 'approved';
+      const firstName = currentUser ? getFirstName(currentUser) : null;
+
+      // Ícone
+      const iconEl = document.getElementById('successIcon');
+      iconEl.className = 'success-icon ' + (isApproved ? 'approved' : 'pending');
+      iconEl.innerHTML = isApproved
+        ? '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+
+      // Label e título
+      const labelEl = document.getElementById('successLabel');
+      labelEl.className = 'success-label ' + (isApproved ? 'approved' : 'pending');
+      labelEl.textContent = isApproved ? 'Compra Confirmada' : 'Pagamento em Análise';
+
+      document.getElementById('successTitle').textContent = firstName
+        ? `Obrigado, ${firstName}!`
+        : 'Obrigado pela sua compra!';
+
+      // Número do pedido
+      const orderNumEl = document.getElementById('successOrderNum');
+      if (_checkoutOrderId) {
+        const shortId = _checkoutOrderId.split('-')[0].toUpperCase();
+        orderNumEl.innerHTML = `Pedido <span>#${shortId}</span>`;
+      } else {
+        orderNumEl.textContent = '';
+      }
+
+      // Mensagem
+      document.getElementById('successMsg').innerHTML = isApproved
+        ? 'Seu pedido foi recebido e está sendo preparado com cuidado.<br>Você receberá um e-mail de confirmação em instantes.'
+        : 'Seu pedido está sendo processado.<br>Você receberá uma confirmação assim que o pagamento for aprovado.';
+
+      navigate('checkout-success');
+
+    } else if (_checkoutStatus === 'rejected') {
+      showToast('Pagamento não aprovado', 'Tente novamente com outro método de pagamento.', 'error', 7000);
+    }
+  }
+
+  // Carregar produtos do Supabase; fallback para hardcoded se tabela vazia ou offline
+  try {
+    const { data, error } = await sb.from('products').select('*').eq('active', true).order('created_at');
+    if (!error && data && data.length > 0) {
+      products.length = 0;
+      data.forEach(p => products.push({
+        id:       p.id,
+        name:     p.name,
+        edition:  p.edition  || '',
+        category: p.category || 'all',
+        ptype:    p.ptype    || 'accessory',
+        price:    parseFloat(p.price),
+        oldPrice: p.old_price ? parseFloat(p.old_price) : null,
+        badge:    p.badge    || null,
+        stockQty: Number(p.stock_qty ?? 0),
+        desc:     p.description || '',
+        img:      p.img_url  || null,
+        specs:    p.specs    || {}
+      }));
+    }
+  } catch(e) { /* usa produtos hardcoded como fallback */ }
+
+  // Restaura carrinho salvo (persiste ao voltar do MP sem concluir)
+  try {
+    const saved = localStorage.getItem('sktcg_cart');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) { cart.length = 0; parsed.forEach(i => cart.push(i)); }
+    }
+  } catch(e) {}
+  renderCart();
+
+  renderHome();
+}
+init();
+</script>
+
+<!-- TOAST CONTAINER -->
+<div id="sk-toast-container"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="sk-loading">
+  <div class="sk-loader-ring"></div>
+  <span class="sk-loader-label">Aguarde</span>
+</div>
+
+</body>
+</html>
