@@ -718,6 +718,10 @@ function openProductModal(id) {
         <div class="form-group"><label>Estoque</label>
           <input type="number" step="1" min="0" class="form-input" name="stock_qty" value="${p.stock_qty ?? 0}"></div>
       </div>
+      <div class="form-group"><label>Peso para frete (gramas)</label>
+        <input type="number" step="1" min="0" class="form-input" name="weight" value="${p.weight ?? ''}" placeholder="Deixe vazio para usar peso padrão da categoria">
+        <div class="form-help">Ex: 150g para blister, 950g para ETB. Se vazio, usa tabela padrão por categoria.</div>
+      </div>
       <div class="form-group"><label>Badge</label>
         <select class="form-select" name="badge">
           <option value="">nenhum</option>
@@ -803,6 +807,7 @@ async function saveProductForm(event, id) {
       old_price: oldPrice,
       cost_price: fd.get('cost_price') ? Number(fd.get('cost_price')) : null,
       stock_qty: Number(fd.get('stock_qty') || 0),
+      weight: fd.get('weight') ? Number(fd.get('weight')) : null,
       badge: fd.get('badge') || null,
       description: fd.get('description')?.trim() || null,
       img_url: imgUrl,

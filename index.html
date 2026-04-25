@@ -508,6 +508,30 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
 .cart-qty-btn:hover{background:var(--navy-3);border-color:var(--border-strong);}
 .cart-qty-num{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;min-width:18px;text-align:center;color:var(--white);}
 .cart-footer{padding:24px;border-top:1px solid var(--border);}
+.cart-shipping-box{padding:16px 24px;border-top:1px solid var(--border);}
+.cart-shipping-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.cart-cep-row{display:flex;gap:8px;}
+.cart-cep-input{flex:1;background:var(--black);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--white);outline:none;transition:border-color 0.2s;}
+.cart-cep-input:focus{border-color:var(--purple);}
+.cart-cep-btn{background:var(--purple);color:var(--white);border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;}
+.cart-cep-btn:hover{opacity:0.85;}
+.cart-cep-btn:disabled{opacity:0.5;cursor:default;}
+.cart-shipping-opts{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.cart-shipping-opt{display:flex;align-items:center;justify-content:space-between;background:var(--navy-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color 0.2s;}
+.cart-shipping-opt.selected{border-color:var(--purple);background:rgba(124,58,237,0.08);}
+.cart-shipping-opt:hover{border-color:var(--border-strong);}
+.cart-shipping-opt-left{display:flex;align-items:center;gap:8px;}
+.cart-shipping-opt-radio{width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;transition:border-color 0.2s;}
+.cart-shipping-opt.selected .cart-shipping-opt-radio{border-color:var(--purple);background:var(--purple);box-shadow:inset 0 0 0 2px var(--navy-2);}
+.cart-shipping-opt-name{font-size:13px;font-weight:500;color:var(--white);}
+.cart-shipping-opt-prazo{font-size:11px;color:var(--text-dim);}
+.cart-shipping-opt-price{font-size:13px;font-weight:600;color:var(--white);}
+.cart-shipping-free{font-size:12px;font-weight:500;color:var(--green);text-align:center;margin-top:8px;}
+.cart-shipping-err{font-size:12px;color:var(--red);margin-top:6px;}
+.cart-summary{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.cart-summary-row{display:flex;justify-content:space-between;align-items:center;}
+.cart-summary-label{font-size:13px;color:var(--text-dim);}
+.cart-summary-value{font-size:13px;color:var(--text-mid);}
 .cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
 .cart-total-label{font-size:14px;font-weight:400;color:var(--text-dim);}
 .cart-total-value{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:var(--white);}
@@ -959,7 +983,25 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
       <p>Seu carrinho está vazio.</p>
     </div>
   </div>
+  <div class="cart-shipping-box" id="cartShippingBox" style="display:none">
+    <div class="cart-shipping-label">Calcular Frete</div>
+    <div class="cart-cep-row">
+      <input class="cart-cep-input" id="cartCepInput" type="text" placeholder="00000-000" maxlength="9" oninput="maskCep(this)">
+      <button class="cart-cep-btn" id="cartCepBtn" onclick="calcularFrete()">Calcular</button>
+    </div>
+    <div id="cartShippingOpts"></div>
+  </div>
   <div class="cart-footer">
+    <div class="cart-summary" id="cartSummary" style="display:none">
+      <div class="cart-summary-row">
+        <span class="cart-summary-label">Subtotal</span>
+        <span class="cart-summary-value" id="cartSubtotalValue">R$ 0,00</span>
+      </div>
+      <div class="cart-summary-row">
+        <span class="cart-summary-label">Frete</span>
+        <span class="cart-summary-value" id="cartFreteValue">—</span>
+      </div>
+    </div>
     <div class="cart-total">
       <span class="cart-total-label">Total</span>
       <span class="cart-total-value" id="cartTotalValue">R$ 0,00</span>
@@ -2390,6 +2432,164 @@ function updateQty(d){
 // ===== CART STATE =====
 let cart = [];
 
+// ===== FRETE =====
+const FRETE_GRATIS_MINIMO = 799;
+const PESO_PADRAO_POR_CATEGORIA = {
+  'booster-packs': 150,
+  'boxes':         950,
+  'singles':        25,
+  'graded':        130,
+  'bundles':       400,
+  'accessories':   300,
+};
+let shippingOption = null; // { servico, nome, preco, prazo }
+let shippingOpcoes = [];
+
+function maskCep(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5);
+  el.value = v;
+}
+
+function calcPesoTotal() {
+  return cart.reduce((total, item) => {
+    const p = products.find(x => x.id === item.id);
+    const pesoCad = p?.weight ? Number(p.weight) : null;
+    const pesoCat = PESO_PADRAO_POR_CATEGORIA[p?.category] || 200;
+    return total + (pesoCad || pesoCat) * item.qty;
+  }, 0);
+}
+
+function calcSubtotal() {
+  return cart.reduce((s, item) => {
+    const p = products.find(x => x.id === item.id);
+    return s + (p ? parseFloat(p.price) * item.qty : 0);
+  }, 0);
+}
+
+function fmtBRL(v) {
+  return 'R$ ' + v.toFixed(2).replace('.', ',');
+}
+
+async function calcularFrete() {
+  const cep = document.getElementById('cartCepInput').value.trim();
+  if (!/^\d{5}-\d{3}$/.test(cep)) {
+    document.getElementById('cartShippingOpts').innerHTML =
+      '<div class="cart-shipping-err">CEP inválido. Use o formato 00000-000.</div>';
+    return;
+  }
+  const btn = document.getElementById('cartCepBtn');
+  btn.textContent = '...'; btn.disabled = true;
+  document.getElementById('cartShippingOpts').innerHTML =
+    '<div class="cart-shipping-err" style="color:var(--text-dim)">Calculando...</div>';
+
+  try {
+    const peso = calcPesoTotal();
+    const res = await fetch('/api/frete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cepDestino: cep, pesoGramas: peso }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.opcoes?.length) throw new Error('Erro ao calcular frete');
+
+    const subtotal = calcSubtotal();
+    const freteGratis = subtotal >= FRETE_GRATIS_MINIMO;
+    shippingOpcoes = data.opcoes;
+
+    // Seleciona PAC por padrão
+    shippingOption = freteGratis
+      ? { ...shippingOpcoes[0], preco: 0 }
+      : shippingOpcoes[0];
+
+    renderShippingOpts(freteGratis);
+    updateCartTotals();
+  } catch(e) {
+    document.getElementById('cartShippingOpts').innerHTML =
+      '<div class="cart-shipping-err">Não foi possível calcular o frete. Tente novamente.</div>';
+  } finally {
+    btn.textContent = 'Calcular'; btn.disabled = false;
+  }
+}
+
+function renderShippingOpts(freteGratis) {
+  const subtotal = calcSubtotal();
+  const faltaGratis = FRETE_GRATIS_MINIMO - subtotal;
+  let html = '';
+
+  if (freteGratis) {
+    html += '<div class="cart-shipping-free">🎉 Frete grátis aplicado!</div>';
+    // Mostra opções mas com preço 0
+    shippingOpcoes.forEach((opt, i) => {
+      const sel = i === 0 ? 'selected' : '';
+      html += `<div class="cart-shipping-opt ${sel}" onclick="selectShipping(${i}, true)">
+        <div class="cart-shipping-opt-left">
+          <div class="cart-shipping-opt-radio"></div>
+          <div>
+            <div class="cart-shipping-opt-name">${opt.nome}</div>
+            <div class="cart-shipping-opt-prazo">até ${opt.prazo} dias úteis</div>
+          </div>
+        </div>
+        <div class="cart-shipping-opt-price">Grátis</div>
+      </div>`;
+    });
+  } else {
+    if (faltaGratis > 0) {
+      html += `<div class="cart-shipping-free" style="color:var(--text-dim)">Frete grátis acima de ${fmtBRL(FRETE_GRATIS_MINIMO)} (faltam ${fmtBRL(faltaGratis)})</div>`;
+    }
+    shippingOpcoes.forEach((opt, i) => {
+      const sel = i === 0 ? 'selected' : '';
+      html += `<div class="cart-shipping-opt ${sel}" onclick="selectShipping(${i}, false)">
+        <div class="cart-shipping-opt-left">
+          <div class="cart-shipping-opt-radio"></div>
+          <div>
+            <div class="cart-shipping-opt-name">${opt.nome}</div>
+            <div class="cart-shipping-opt-prazo">até ${opt.prazo} dias úteis</div>
+          </div>
+        </div>
+        <div class="cart-shipping-opt-price">${fmtBRL(opt.preco)}</div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('cartShippingOpts').innerHTML =
+    '<div class="cart-shipping-opts">' + html + '</div>';
+}
+
+function selectShipping(idx, gratis) {
+  const opt = shippingOpcoes[idx];
+  shippingOption = gratis ? { ...opt, preco: 0 } : opt;
+  document.querySelectorAll('.cart-shipping-opt').forEach((el, i) => {
+    el.classList.toggle('selected', i === idx);
+  });
+  updateCartTotals();
+}
+
+function updateCartTotals() {
+  const subtotal = calcSubtotal();
+  const frete = shippingOption ? shippingOption.preco : 0;
+  const total = subtotal + frete;
+
+  document.getElementById('cartTotalValue').textContent = fmtBRL(total);
+
+  const summaryEl = document.getElementById('cartSummary');
+  if (shippingOption !== null) {
+    summaryEl.style.display = 'flex';
+    document.getElementById('cartSubtotalValue').textContent = fmtBRL(subtotal);
+    document.getElementById('cartFreteValue').textContent =
+      frete === 0 ? 'Grátis' : fmtBRL(frete);
+  } else {
+    summaryEl.style.display = 'none';
+  }
+
+  // Parcelas (sem frete)
+  const inst = document.getElementById('cartInstallments');
+  if (inst && total > 0) {
+    const parc = (total / 12).toFixed(2).replace('.', ',');
+    inst.textContent = `ou 12x de R$ ${parc} no cartão`;
+  }
+}
+
 function addToCart(id, requestedQty){
   const p = products.find(x => x.id === id);
   if(!p){ return; }
@@ -2453,13 +2653,11 @@ function renderCart(){
     </div>`;
     document.getElementById('cartTotalValue').textContent = 'R$ 0,00';
     document.getElementById('cartInstallments').textContent = '';
+    document.getElementById('cartShippingBox').style.display = 'none';
+    document.getElementById('cartSummary').style.display = 'none';
+    shippingOption = null;
     return;
   }
-
-  const total = cart.reduce((s, c) => {
-    const p = products.find(x => x.id === c.id);
-    return s + (p ? p.price * c.qty : 0);
-  }, 0);
 
   itemsEl.innerHTML = cart.map(c => {
     const p = products.find(x => x.id === c.id);
@@ -2485,8 +2683,8 @@ function renderCart(){
     </div>`;
   }).join('');
 
-  document.getElementById('cartTotalValue').textContent = `R$ ${total.toFixed(2).replace('.',',')}`;
-  document.getElementById('cartInstallments').textContent = `ou 12x de R$ ${(total/12).toFixed(2).replace('.',',')} sem juros`;
+  document.getElementById('cartShippingBox').style.display = 'block';
+  updateCartTotals();
 }
 
 // ===== CHECKOUT =====
@@ -2510,6 +2708,12 @@ async function startCheckout() {
     return;
   }
 
+  if (!shippingOption) {
+    showToast('Calcule o frete', 'Informe o CEP de entrega antes de finalizar.', 'info', 4000);
+    document.getElementById('cartCepInput').focus();
+    return;
+  }
+
   const btn = document.getElementById('checkoutBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Processando…'; }
 
@@ -2521,6 +2725,8 @@ async function startCheckout() {
         cart: cart.map(c => ({ id: c.id, qty: c.qty })),
         user_id: currentUser.id,
         shipping_address: address,
+        shipping_cost: shippingOption.preco,
+        shipping_service: shippingOption.nome,
       }),
     });
 

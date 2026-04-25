@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { cart, user_id, shipping_address } = req.body;
+  const { cart, user_id, shipping_address, shipping_cost = 0, shipping_service = null } = req.body;
 
   if (!cart || cart.length === 0) {
     return res.status(400).json({ error: 'Carrinho vazio' });
@@ -72,6 +72,18 @@ module.exports = async (req, res) => {
   }
 
   const subtotal = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  const freteValor = parseFloat(shipping_cost) || 0;
+
+  // Adiciona frete como item separado no MP (se houver)
+  if (freteValor > 0) {
+    items.push({
+      id: 'frete',
+      title: `Frete ${shipping_service || 'PAC'}`,
+      quantity: 1,
+      unit_price: parseFloat(freteValor.toFixed(2)),
+      currency_id: 'BRL',
+    });
+  }
 
   // 3. Cria pedido no Supabase como 'pending'
   const { data: order, error: orderError } = await supabase
@@ -80,8 +92,9 @@ module.exports = async (req, res) => {
       user_id,
       status: 'pending',
       subtotal: parseFloat(subtotal.toFixed(2)),
-      shipping_cost: 0,
-      total: parseFloat(subtotal.toFixed(2)),
+      shipping_cost: parseFloat(freteValor.toFixed(2)),
+      shipping_service: shipping_service || null,
+      total: parseFloat((subtotal + freteValor).toFixed(2)),
       shipping_address: shipping_address || null,
     })
     .select()
