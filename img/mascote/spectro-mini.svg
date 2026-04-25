@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <rect width="120" height="120" fill="#0F1328" rx="12"/>
+  <text x="60" y="54" text-anchor="middle" fill="#7C3AED" font-family="Inter,sans-serif" font-size="9">PLACEHOLDER</text>
+  <text x="60" y="70" text-anchor="middle" fill="#F5F3FF" font-family="Inter,sans-serif" font-size="11" font-weight="600">Spectro Mini</text>
+  <text x="60" y="86" text-anchor="middle" fill="#9B9BB0" font-family="Inter,sans-serif" font-size="9">120×120px</text>
+</svg>
