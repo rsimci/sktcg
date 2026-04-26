@@ -6,7 +6,6 @@
 <title>SK TCG — Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 <style>
 /* ===== RESET & BASE ===== */
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -1108,225 +1107,35 @@ async function saveOrderOps(event, id) {
 
 /* ---------- EXCEL EXPORT ---------- */
 async function exportToExcel(type) {
-  if (typeof ExcelJS === 'undefined') {
-    toast('Carregando biblioteca...', 'info');
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js';
-    s.onload = () => exportToExcel(type);
-    s.onerror = () => toast('Falha ao carregar biblioteca de exportação.', 'error');
-    document.head.appendChild(s);
-    return;
-  }
+  const btn = document.querySelector(`[onclick="exportToExcel('${type}')"]`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Gerando…'; }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { toast('Sessão expirada. Faça login novamente.', 'error'); return; }
 
-  /* ── Paleta SK TCG (ARGB = FF + hex) ── */
-  const C = {
-    navyDark:'FF0F1328', purple:'FF7C3AED', purpleLight:'FFA855F7',
-    purpleFaint:'FFF0EBFF', white:'FFFFFFFF', textLight:'FFF5F3FF',
-    textGray:'FF9B9BB0', borderGray:'FFE5E7EB', rowAlt:'FFF9F7FF',
-    green:'FF15803D', greenBg:'FFDCFCE7',
-    red:'FFB91C1C',   redBg:'FFFEE2E2',
-    gold:'FFB45309',  goldBg:'FFFEF3C7',
-    blue:'FF1D4ED8',  blueBg:'FFEFF6FF',
-    gray:'FF6B7280',  grayBg:'FFF3F4F6',
-    dark:'FF1F2937',
-  };
+    const res = await fetch(`/api/export?type=${type}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
 
-  const solidFill = argb => ({ type:'pattern', pattern:'solid', fgColor:{ argb } });
-  const thinBorder = argb => ({ style:'thin', color:{ argb } });
-  const allBorders = (argb=C.borderGray) => ({ top:thinBorder(argb), bottom:thinBorder(argb), left:thinBorder(argb), right:thinBorder(argb) });
-
-  function applyCell(cell, { fillArgb, fontArgb=C.dark, bold=false, sz=10, fontName='Arial', halign='left', valign='middle', numFmt=null, borders=true, borderArgb=C.borderGray }) {
-    if (fillArgb) cell.fill = solidFill(fillArgb);
-    cell.font = { name:fontName, size:sz, bold, color:{ argb:fontArgb } };
-    cell.alignment = { horizontal:halign, vertical:valign, wrapText:false };
-    if (borders) cell.border = allBorders(borderArgb);
-    if (numFmt) cell.numFmt = numFmt;
-  }
-
-  const BRL = '"R$" #,##0.00';
-  const now = new Date();
-  const todayStr = now.toLocaleString('pt-BR');
-  const fileDate = now.toISOString().slice(0,10);
-
-  /* ── Helper: build title block (rows 1–4) ── */
-  function buildTitleBlock(ws, title, subtitle, ncols) {
-    // Mescla colunas nas 4 primeiras linhas
-    ws.mergeCells(1,1,1,ncols);
-    ws.mergeCells(2,1,2,ncols);
-    ws.mergeCells(3,1,3,ncols);
-    ws.mergeCells(4,1,4,ncols);
-
-    ws.getRow(1).height = 38;
-    ws.getRow(2).height = 22;
-    ws.getRow(3).height = 6;
-    ws.getRow(4).height = 6;
-
-    // Linha 1: título
-    const t = ws.getCell(1,1);
-    t.value = title;
-    applyCell(t, { fillArgb:C.navyDark, fontArgb:C.purpleLight, bold:true, sz:18, halign:'left', borders:false });
-
-    // Linha 2: subtítulo
-    const s = ws.getCell(2,1);
-    s.value = subtitle;
-    applyCell(s, { fillArgb:C.navyDark, fontArgb:C.textGray, sz:11, halign:'left', borders:false });
-
-    // Linhas 3–4: espaçadores navy
-    for (let row=3; row<=4; row++) {
-      const c = ws.getCell(row,1);
-      c.fill = solidFill(C.navyDark);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Erro ${res.status}`);
     }
-  }
 
-  /* ── Helper: linha de cabeçalho de colunas ── */
-  function buildColHeaders(ws, headers, rowIdx) {
-    ws.getRow(rowIdx).height = 26;
-    headers.forEach((h, ci) => {
-      const cell = ws.getCell(rowIdx, ci+1);
-      cell.value = h;
-      applyCell(cell, { fillArgb:C.purple, fontArgb:C.white, bold:true, sz:10, halign:'center', borderArgb:C.purple });
-    });
-  }
-
-  /* ── Helper: estilo de status (pedidos) ── */
-  const orderStatusStyle = st => ({
-    pending:  { fillArgb:C.goldBg,     fontArgb:C.gold   },
-    approved: { fillArgb:C.blueBg,     fontArgb:C.blue   },
-    shipped:  { fillArgb:C.purpleFaint,fontArgb:C.purple },
-    delivered:{ fillArgb:C.greenBg,    fontArgb:C.green  },
-    cancelled:{ fillArgb:C.grayBg,     fontArgb:C.gray   },
-    refunded: { fillArgb:C.redBg,      fontArgb:C.red    },
-  }[st] || { fillArgb:C.white, fontArgb:C.dark });
-
-  /* ── Download helper ── */
-  async function downloadWorkbook(wb, filename) {
-    const buf = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `sktcg-${type}-${date}.xlsx`;
+    a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  /* ══════════════════ PRODUTOS ══════════════════ */
-  if (type === 'produtos') {
-    const data = filteredProducts();
-    if (!data.length) { toast('Nenhum produto para exportar.', 'error'); return; }
-
-    const headers = ['Nome','SKU','Edição','Categoria','Tipo','Preço (R$)','Ant. (R$)','Custo (R$)','Estoque','Status','Peso (g)','Badge','Cadastrado em'];
-    const colWidths = [34,13,17,16,10,13,12,12,9,10,9,9,14];
-    const NC = headers.length;
-
-    const wb = new ExcelJS.Workbook();
-    wb.creator = 'SK TCG Admin';
-    const ws = wb.addWorksheet('Produtos');
-
-    ws.views = [{ state:'frozen', xSplit:0, ySplit:5 }];
-    headers.forEach((_, i) => { ws.getColumn(i+1).width = colWidths[i]; });
-
-    buildTitleBlock(ws, 'SK TCG', `Exportação de Produtos  ·  ${todayStr}`, NC);
-    buildColHeaders(ws, headers, 5);
-
-    data.forEach((p, ri) => {
-      const rowIdx = 6 + ri;
-      const ev = ri % 2 === 1;
-      const bg = ev ? C.rowAlt : C.white;
-      const row = ws.getRow(rowIdx);
-      row.height = 19;
-
-      const values = [
-        p.name||'', p.sku||'', p.edition||'',
-        CAT_LABEL[p.category]||p.category||'', p.ptype||'',
-        parseFloat(p.price)||0,
-        p.old_price ? parseFloat(p.old_price) : null,
-        p.cost_price ? parseFloat(p.cost_price) : null,
-        parseInt(p.stock_qty)||0,
-        p.active ? 'Ativo' : 'Inativo',
-        p.weight||null, p.badge||'',
-        p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '',
-      ];
-
-      values.forEach((v, ci) => {
-        const cell = ws.getCell(rowIdx, ci+1);
-        cell.value = v;
-        if ([5,6,7].includes(ci)) {
-          applyCell(cell, { fillArgb:bg, sz:10, halign:'right', numFmt:BRL });
-        } else if (ci === 8) {
-          applyCell(cell, { fillArgb:bg, sz:10, halign:'center' });
-        } else if (ci === 9) {
-          const active = v === 'Ativo';
-          applyCell(cell, { fillArgb:active?C.greenBg:C.redBg, fontArgb:active?C.green:C.red, bold:true, sz:10, halign:'center' });
-        } else {
-          applyCell(cell, { fillArgb:bg, sz:10 });
-        }
-      });
-    });
-
-    await downloadWorkbook(wb, `sktcg-produtos-${fileDate}.xlsx`);
     toast('Exportado com sucesso!', 'success');
-
-  /* ══════════════════ PEDIDOS ══════════════════ */
-  } else if (type === 'pedidos') {
-    const data = state.orders;
-    if (!data.length) { toast('Nenhum pedido para exportar.', 'error'); return; }
-
-    const headers = ['Pedido #','Data','Cliente','Subtotal (R$)','Frete (R$)','Total (R$)','Status','Serviço','Rastreio','Endereço de Entrega'];
-    const colWidths = [12,18,23,14,12,14,14,12,22,50];
-    const NC = headers.length;
-
-    const wb = new ExcelJS.Workbook();
-    wb.creator = 'SK TCG Admin';
-    const ws = wb.addWorksheet('Pedidos');
-
-    ws.views = [{ state:'frozen', xSplit:0, ySplit:5 }];
-    headers.forEach((_, i) => { ws.getColumn(i+1).width = colWidths[i]; });
-
-    buildTitleBlock(ws, 'SK TCG', `Exportação de Pedidos  ·  ${todayStr}`, NC);
-    buildColHeaders(ws, headers, 5);
-
-    data.forEach((o, ri) => {
-      const rowIdx = 6 + ri;
-      const ev = ri % 2 === 1;
-      const bg = ev ? C.rowAlt : C.white;
-      const row = ws.getRow(rowIdx);
-      row.height = 19;
-
-      const addr = o.shipping_address||{};
-      const addrStr = addr.street
-        ? `${addr.street}, ${addr.number}${addr.complement?' '+addr.complement:''} — ${addr.neighborhood}, ${addr.city}/${addr.state} — CEP ${addr.cep}`
-        : '';
-
-      const values = [
-        o.id.slice(0,8),
-        o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : '',
-        o.profiles?.name||'',
-        parseFloat(o.subtotal)||0,
-        parseFloat(o.shipping_cost)||0,
-        parseFloat(o.total)||0,
-        STATUS_MAP[o.status]?.label||o.status||'',
-        o.shipping_service||'',
-        o.tracking_code||'',
-        addrStr,
-      ];
-
-      values.forEach((v, ci) => {
-        const cell = ws.getCell(rowIdx, ci+1);
-        cell.value = v;
-        if ([3,4,5].includes(ci)) {
-          applyCell(cell, { fillArgb:bg, sz:10, halign:'right', numFmt:BRL });
-        } else if (ci === 6) {
-          const st = orderStatusStyle(o.status);
-          applyCell(cell, { fillArgb:st.fillArgb, fontArgb:st.fontArgb, bold:true, sz:10, halign:'center' });
-        } else if (ci === 0) {
-          applyCell(cell, { fillArgb:bg, fontName:'Courier New', sz:10, halign:'center' });
-        } else {
-          applyCell(cell, { fillArgb:bg, sz:10 });
-        }
-      });
-    });
-
-    await downloadWorkbook(wb, `sktcg-pedidos-${fileDate}.xlsx`);
-    toast('Exportado com sucesso!', 'success');
+  } catch (e) {
+    console.error('[admin:export]', e);
+    toast('Erro ao exportar: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '⬇ Exportar Excel'; }
   }
 }
 
