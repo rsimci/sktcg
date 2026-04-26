@@ -6,7 +6,7 @@
 <title>SK TCG — Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 /* ===== RESET & BASE ===== */
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -1109,7 +1109,12 @@ async function saveOrderOps(event, id) {
 /* ---------- EXCEL EXPORT ---------- */
 function exportToExcel(type) {
   if (typeof XLSX === 'undefined') {
-    toast('Biblioteca de exportação não carregada. Recarregue a página.', 'error');
+    toast('Carregando biblioteca...', 'info');
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = () => exportToExcel(type);
+    s.onerror = () => toast('Falha ao carregar biblioteca de exportação.', 'error');
+    document.head.appendChild(s);
     return;
   }
   const wb = XLSX.utils.book_new();
