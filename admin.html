@@ -6,6 +6,7 @@
 <title>SK TCG — Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 /* ===== RESET & BASE ===== */
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -563,11 +564,22 @@ function showView(name) {
   const actions = document.getElementById('topbar-actions');
   actions.innerHTML = '';
   if (name === 'produtos') {
+    const expBtn = document.createElement('button');
+    expBtn.className = 'btn btn-ghost';
+    expBtn.innerHTML = '⬇ Exportar Excel';
+    expBtn.onclick = () => exportToExcel('produtos');
+    actions.appendChild(expBtn);
     const btn = document.createElement('button');
     btn.className = 'btn btn-purple';
     btn.textContent = '+ Novo produto';
     btn.onclick = () => openProductModal(null);
     actions.appendChild(btn);
+  } else if (name === 'pedidos') {
+    const expBtn = document.createElement('button');
+    expBtn.className = 'btn btn-ghost';
+    expBtn.innerHTML = '⬇ Exportar Excel';
+    expBtn.onclick = () => exportToExcel('pedidos');
+    actions.appendChild(expBtn);
   } else if (name === 'pedido-detalhe') {
     const back = document.createElement('button');
     back.className = 'btn btn-ghost';
@@ -1092,6 +1104,125 @@ async function saveOrderOps(event, id) {
   return false;
 }
 
+/* ---------- EXCEL EXPORT ---------- */
+function exportToExcel(type) {
+  if (typeof XLSX === 'undefined') {
+    toast('Biblioteca de exportação não carregada. Recarregue a página.', 'error');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const purple = '7C3AED', navyDark = '0F1328', textLight = 'F5F3FF', textPurple = 'A855F7';
+  const hdrStyle = { fill: { patternType: 'solid', fgColor: { rgb: purple } }, font: { bold: true, color: { rgb: textLight }, name: 'Arial', sz: 11 }, alignment: { horizontal: 'center', vertical: 'center' } };
+  const titleStyle = { fill: { patternType: 'solid', fgColor: { rgb: navyDark } }, font: { bold: true, color: { rgb: textPurple }, name: 'Arial', sz: 13 } };
+
+  if (type === 'produtos') {
+    const data = filteredProducts();
+    if (!data.length) { toast('Nenhum produto para exportar.', 'error'); return; }
+
+    const COLS = 13;
+    const headers = ['Nome', 'SKU', 'Edição', 'Categoria', 'Tipo', 'Preço (R$)', 'Preço Anterior (R$)', 'Custo (R$)', 'Estoque', 'Status', 'Peso (g)', 'Badge', 'Criado em'];
+    const rows = data.map(p => [
+      p.name || '',
+      p.sku || '',
+      p.edition || '',
+      CAT_LABEL[p.category] || p.category || '',
+      p.ptype || '',
+      parseFloat(p.price) || 0,
+      p.old_price ? parseFloat(p.old_price) : '',
+      p.cost_price ? parseFloat(p.cost_price) : '',
+      parseInt(p.stock_qty) || 0,
+      p.active ? 'Ativo' : 'Inativo',
+      p.weight || '',
+      p.badge || '',
+      p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '',
+    ]);
+
+    const aoa = [
+      ['SK TCG — Exportação de Produtos'],
+      [`Gerado em: ${new Date().toLocaleString('pt-BR')}`],
+      [],
+      headers,
+      ...rows,
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [35,15,20,18,12,14,18,14,10,10,10,10,16].map(w => ({ wch: w }));
+    ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:COLS-1} }, { s:{r:1,c:0}, e:{r:1,c:COLS-1} }];
+
+    // Estilo título e data
+    ['A1','A2'].forEach((ref,i) => { if (ws[ref]) ws[ref].s = titleStyle; });
+
+    // Estilo cabeçalhos
+    headers.forEach((_, ci) => {
+      const ref = XLSX.utils.encode_cell({ r: 3, c: ci });
+      if (ws[ref]) ws[ref].s = hdrStyle;
+    });
+
+    // Formato moeda
+    rows.forEach((_, ri) => {
+      [5, 6, 7].forEach(ci => {
+        const ref = XLSX.utils.encode_cell({ r: 4 + ri, c: ci });
+        if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = '"R$"\\ #,##0.00';
+      });
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+    XLSX.writeFile(wb, `sktcg-produtos-${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast('Exportado com sucesso!', 'success');
+
+  } else if (type === 'pedidos') {
+    const data = state.orders;
+    if (!data.length) { toast('Nenhum pedido para exportar.', 'error'); return; }
+
+    const COLS = 10;
+    const headers = ['Pedido #', 'Data', 'Cliente', 'Subtotal (R$)', 'Frete (R$)', 'Total (R$)', 'Status', 'Serviço de Frete', 'Rastreio', 'Endereço de Entrega'];
+    const rows = data.map(o => {
+      const addr = o.shipping_address || {};
+      const addrStr = addr.street
+        ? `${addr.street}, ${addr.number}${addr.complement ? ' ' + addr.complement : ''} — ${addr.neighborhood}, ${addr.city}/${addr.state} — CEP ${addr.cep}`
+        : '';
+      return [
+        o.id.slice(0, 8),
+        o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : '',
+        o.profiles?.name || '',
+        parseFloat(o.subtotal) || 0,
+        parseFloat(o.shipping_cost) || 0,
+        parseFloat(o.total) || 0,
+        STATUS_MAP[o.status]?.label || o.status || '',
+        o.shipping_service || '',
+        o.tracking_code || '',
+        addrStr,
+      ];
+    });
+
+    const aoa = [
+      ['SK TCG — Exportação de Pedidos'],
+      [`Gerado em: ${new Date().toLocaleString('pt-BR')}`],
+      [],
+      headers,
+      ...rows,
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [12,18,25,14,12,14,14,16,20,50].map(w => ({ wch: w }));
+    ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:COLS-1} }, { s:{r:1,c:0}, e:{r:1,c:COLS-1} }];
+
+    ['A1','A2'].forEach(ref => { if (ws[ref]) ws[ref].s = titleStyle; });
+    headers.forEach((_, ci) => {
+      const ref = XLSX.utils.encode_cell({ r: 3, c: ci });
+      if (ws[ref]) ws[ref].s = hdrStyle;
+    });
+    rows.forEach((_, ri) => {
+      [3, 4, 5].forEach(ci => {
+        const ref = XLSX.utils.encode_cell({ r: 4 + ri, c: ci });
+        if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = '"R$"\\ #,##0.00';
+      });
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
+    XLSX.writeFile(wb, `sktcg-pedidos-${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast('Exportado com sucesso!', 'success');
+  }
+}
+
 /* ---------- FILTERS ---------- */
 function attachFilters() {
   document.getElementById('p-search').addEventListener('input', e => {
@@ -1145,6 +1276,7 @@ async function bootstrapAdmin() {
 })();
 
 /* expose for inline onclick handlers */
+window.exportToExcel = exportToExcel;
 window.openProductModal = openProductModal;
 window.saveProductForm = saveProductForm;
 window.deleteProductAction = deleteProductAction;
