@@ -1232,9 +1232,13 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
         </div>
       </div>
 
-      <!-- post quadrado IG -->
-      <div class="social-card" onclick="go('social','ig-1')">
-        <div class="social-thumb"><svg viewBox="0 0 200 200"><use href="#post-unboxing"/></svg></div>
+      <!-- post IG embed real -->
+      <div style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);display:flex;align-items:stretch;">
+        <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DXpsCKtDyAE/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:0;margin:0;max-width:100%;min-width:0;padding:0;width:100%;"></blockquote>
+      </div>
+
+      <!-- post quadrado IG (placeholder removido) -->
+      <div class="social-card" onclick="go('social','ig-1')" style="display:none;">
         <div class="social-overlay">
           <div class="social-platform ig">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
@@ -3909,5 +3913,6 @@ init();
   <span class="sk-loader-label">Aguarde</span>
 </div>
 
+<script async src="//www.instagram.com/embed.js"></script>
 </body>
 </html>
