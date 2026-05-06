@@ -444,7 +444,8 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
 .product-brand{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--purple-glow);margin-bottom:4px;}
 .product-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;color:var(--white);margin-bottom:2px;line-height:1.4;}
 .product-edition{font-size:12px;font-weight:300;color:var(--text-dim);margin-bottom:12px;}
-.lang-flag{font-size:11px;vertical-align:middle;margin-left:5px;opacity:0.85;}
+.lang-flag{display:inline-flex;align-items:center;margin-left:6px;vertical-align:middle;}
+.lang-flag svg{width:17px;height:12px;border-radius:2px;display:block;box-shadow:0 0 0 1px rgba(255,255,255,0.12);}
 .product-footer{display:flex;align-items:center;justify-content:space-between;}
 .product-price{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;color:var(--white);}
 .product-price-old{font-size:12px;text-decoration:line-through;color:var(--text-dim);font-weight:300;}
@@ -2243,9 +2244,27 @@ function imgFallback(el, id){
 }
 function langFlag(lang){
   if(!lang) return '';
-  if(lang==='Inglês')    return '<span class="lang-flag">🇺🇸</span>';
-  if(lang==='Português') return '<span class="lang-flag">🇧🇷</span>';
-  return '';
+  const flags = {
+    'Inglês': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" aria-label="Inglês">
+      <rect width="20" height="14" fill="#fff"/>
+      <rect width="20" height="1.08" y="0"     fill="#B22234"/>
+      <rect width="20" height="1.08" y="2.15"  fill="#B22234"/>
+      <rect width="20" height="1.08" y="4.31"  fill="#B22234"/>
+      <rect width="20" height="1.08" y="6.46"  fill="#B22234"/>
+      <rect width="20" height="1.08" y="8.62"  fill="#B22234"/>
+      <rect width="20" height="1.08" y="10.77" fill="#B22234"/>
+      <rect width="20" height="1.08" y="12.92" fill="#B22234"/>
+      <rect width="8" height="7.5" fill="#3C3B6E"/>
+    </svg>`,
+    'Português': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" aria-label="Português">
+      <rect width="20" height="14" fill="#009C3B"/>
+      <polygon points="10,1.5 18.5,7 10,12.5 1.5,7" fill="#FFDF00"/>
+      <circle cx="10" cy="7" r="3.2" fill="#002776"/>
+      <path d="M7.2,6.1 Q10,4.8 12.8,6.1" stroke="#fff" stroke-width="0.55" fill="none"/>
+    </svg>`
+  };
+  const svg = flags[lang];
+  return svg ? `<span class="lang-flag" title="${lang}">${svg}</span>` : '';
 }
 
 function getProductImage(p){
