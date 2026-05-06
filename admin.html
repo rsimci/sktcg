@@ -250,11 +250,11 @@ main.content{display:flex;flex-direction:column;min-width:0;}
           </select>
           <select id="p-category" class="form-select">
             <option value="all">Todas as categorias</option>
-            <option value="booster-packs">Booster Packs</option>
-            <option value="boxes">Boxes / ETB</option>
-            <option value="singles">Singles</option>
-            <option value="graded">Graded</option>
-            <option value="accessories">Acessórios</option>
+            <option value="booster-packs">Booster Packs e Blisters</option>
+            <option value="etbs">ETBs</option>
+            <option value="boxes">Boxes e Bundles</option>
+            <option value="singles">Cartas Singles</option>
+            <option value="graded">Cartas Graduadas</option>
           </select>
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
@@ -387,13 +387,13 @@ function statusPill(s) {
 }
 
 const CAT_LABEL = {
-  'booster-packs': 'Booster Packs',
-  'boxes': 'Boxes / ETB',
-  'singles': 'Singles',
-  'graded': 'Graded',
-  'accessories': 'Acessórios',
+  'booster-packs': 'Booster Packs e Blisters',
+  'etbs': 'ETBs',
+  'boxes': 'Boxes e Bundles',
+  'singles': 'Cartas Singles',
+  'graded': 'Cartas Graduadas',
 };
-const PTYPE_OPTS = ['pack','etb','mini','card','accessory'];
+const PTYPE_OPTS = ['Box','Blister','ETB','Bundle','Pack','Mini Tin'];
 const BADGE_OPTS = ['new','sale','hot','graded'];
 
 function escapeHtml(s) {
@@ -735,6 +735,13 @@ function openProductModal(id) {
         <input type="number" step="1" min="0" class="form-input" name="weight" value="${p.weight ?? ''}" placeholder="Deixe vazio para usar peso padrão da categoria">
         <div class="form-help">Ex: 150g para blister, 950g para ETB. Se vazio, usa tabela padrão por categoria.</div>
       </div>
+      <div class="form-group"><label>Idioma</label>
+        <select class="form-select" name="language">
+          <option value="">— selecione —</option>
+          <option value="Português" ${p.language==='Português'?'selected':''}>🇧🇷 Português</option>
+          <option value="Inglês" ${p.language==='Inglês'?'selected':''}>🇺🇸 Inglês</option>
+        </select>
+      </div>
       <div class="form-group"><label>Badge</label>
         <select class="form-select" name="badge">
           <option value="">nenhum</option>
@@ -821,6 +828,7 @@ async function saveProductForm(event, id) {
       cost_price: fd.get('cost_price') ? Number(fd.get('cost_price')) : null,
       stock_qty: Number(fd.get('stock_qty') || 0),
       weight: fd.get('weight') ? Number(fd.get('weight')) : null,
+      language: fd.get('language') || null,
       badge: fd.get('badge') || null,
       description: fd.get('description')?.trim() || null,
       img_url: imgUrl,

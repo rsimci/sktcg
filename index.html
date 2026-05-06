@@ -444,6 +444,7 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
 .product-brand{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--purple-glow);margin-bottom:4px;}
 .product-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;color:var(--white);margin-bottom:2px;line-height:1.4;}
 .product-edition{font-size:12px;font-weight:300;color:var(--text-dim);margin-bottom:12px;}
+.lang-flag{font-size:11px;vertical-align:middle;margin-left:5px;opacity:0.85;}
 .product-footer{display:flex;align-items:center;justify-content:space-between;}
 .product-price{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;color:var(--white);}
 .product-price-old{font-size:12px;text-decoration:line-through;color:var(--text-dim);font-weight:300;}
@@ -909,12 +910,12 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
     <nav class="nav">
       <div class="nav-link has-dropdown">Categorias
         <div class="dropdown">
-          <a href="#" onclick="navigate('booster-packs');return false;">Booster Packs</a>
-          <a href="#" onclick="navigate('boxes');return false;">Booster Boxes &amp; ETBs</a>
-          <a href="#" onclick="navigate('singles');return false;">Cartas Individuais</a>
+          <a href="#" onclick="navigate('booster-packs');return false;">Booster Packs e Blisters</a>
+          <a href="#" onclick="navigate('etbs');return false;">ETBs</a>
+          <a href="#" onclick="navigate('boxes');return false;">Boxes e Bundles</a>
+          <a href="#" onclick="navigate('singles');return false;">Cartas Singles</a>
           <a href="#" onclick="navigate('graded');return false;">Cartas Graduadas <span class="dropdown-tag">PSA</span></a>
           <div class="dropdown-divider"></div>
-          <a href="#" onclick="navigate('accessories');return false;">Acessórios</a>
           <a href="#" onclick="navigate('all');return false;">Ver tudo →</a>
         </div>
       </div>
@@ -1106,28 +1107,23 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
     <div class="cat-grid">
       <div class="cat-card" onclick="go('category','booster-packs')">
         <div class="cat-icon"><svg viewBox="0 0 80 110"><use href="#icon-pack"/></svg></div>
-        <div class="cat-title">Booster Packs</div>
-        <div class="cat-count">48 produtos</div>
+        <div class="cat-title">Booster Packs e Blisters</div>
+      </div>
+      <div class="cat-card" onclick="go('category','etbs')">
+        <div class="cat-icon"><svg viewBox="0 0 100 100"><use href="#icon-box"/></svg></div>
+        <div class="cat-title">ETBs</div>
       </div>
       <div class="cat-card" onclick="go('category','boxes')">
-        <div class="cat-icon"><svg viewBox="0 0 100 100"><use href="#icon-box"/></svg></div>
-        <div class="cat-title">Boxes & ETBs</div>
-        <div class="cat-count">22 produtos</div>
-      </div>
-      <div class="cat-card" onclick="go('category','bundles')">
         <div class="cat-icon"><svg viewBox="0 0 120 90"><use href="#icon-bundle"/></svg></div>
-        <div class="cat-title">Bundles</div>
-        <div class="cat-count">14 produtos</div>
+        <div class="cat-title">Boxes e Bundles</div>
       </div>
       <div class="cat-card" onclick="go('category','singles')">
         <div class="cat-icon"><svg viewBox="0 0 80 110"><use href="#icon-card"/></svg></div>
         <div class="cat-title">Cartas Singles</div>
-        <div class="cat-count">2.8k cartas</div>
       </div>
       <div class="cat-card" onclick="go('category','graded')">
         <div class="cat-icon"><svg viewBox="0 0 90 120"><use href="#icon-graded"/></svg></div>
-        <div class="cat-title">Graduadas</div>
-        <div class="cat-count">PSA · BGS · 96</div>
+        <div class="cat-title">Cartas Graduadas</div>
       </div>
     </div>
   </div>
@@ -2069,11 +2065,12 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
       <div class="footer-col">
         <h4>Loja</h4>
         <ul>
-          <li><a href="#" onclick="navigate('booster-packs');return false;">Booster Packs</a></li>
+          <li><a href="#" onclick="navigate('booster-packs');return false;">Booster Packs e Blisters</a></li>
           <li><a href="#" onclick="navigate('boxes');return false;">Boxes & ETBs</a></li>
-          <li><a href="#" onclick="navigate('bundles');return false;">Bundles</a></li>
-          <li><a href="#" onclick="navigate('singles');return false;">Singles</a></li>
-          <li><a href="#" onclick="navigate('graded');return false;">Graduadas</a></li>
+          <li><a href="#" onclick="navigate('etbs');return false;">ETBs</a></li>
+          <li><a href="#" onclick="navigate('boxes');return false;">Boxes e Bundles</a></li>
+          <li><a href="#" onclick="navigate('singles');return false;">Cartas Singles</a></li>
+          <li><a href="#" onclick="navigate('graded');return false;">Cartas Graduadas</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -2139,7 +2136,9 @@ function makeSVG(type, setColor, setName) {
     'bundle': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200"><defs><linearGradient id="bu${c.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c}"/><stop offset="100%" stop-color="${c}bb"/></linearGradient></defs><rect x="25" y="30" width="190" height="140" rx="10" fill="url(#bu${c.slice(1)})"/><rect x="35" y="40" width="170" height="120" rx="6" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.12"/><rect x="48" y="55" width="30" height="50" rx="3" fill="#fff" opacity="0.07"/><rect x="64" y="55" width="30" height="50" rx="3" fill="#fff" opacity="0.05"/><rect x="80" y="55" width="30" height="50" rx="3" fill="#fff" opacity="0.04"/></svg>`,
     'accessory': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="30" y="30" width="140" height="140" rx="16" fill="#E8EDF2"/><rect x="42" y="42" width="116" height="116" rx="10" fill="none" stroke="#0D1B2A" stroke-width="1" opacity="0.1"/><circle cx="100" cy="100" r="30" fill="none" stroke="#0D1B2A" stroke-width="1.2" opacity="0.12"/><circle cx="100" cy="100" r="8" fill="#0D1B2A" opacity="0.06"/></svg>`
   };
-  return svgs[type] || svgs['accessory'];
+  const aliases = { 'Box':'box','Blister':'pack','ETB':'etb','Bundle':'bundle','Pack':'pack','Mini Tin':'etb' };
+  const key = aliases[type] || type;
+  return svgs[key] || svgs['accessory'];
 }
 
 // Color map for editions
@@ -2162,38 +2161,78 @@ const IMG = {
 };
 
 const products = [
-  // ASCENDED HEROES — Mega Evolution Series 2026
-  {id:1, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'etb', img:IMG.ahETB, price:409.49, badge:'new', stockQty:10,
+  // ASCENDED HEROES — Mega Evolution 2026 (Inglês)
+  {id:1, name:'ETB — Ascended Heroes', edition:'Ascended Heroes', category:'etbs', ptype:'ETB', img:IMG.ahETB, price:599.90, badge:'new', stockQty:2, language:'Inglês',
    desc:'Elite Trainer Box da expansão Mega Evolution — Ascended Heroes. Inclui 9 Booster Packs, promo full art de N\'s Zekrom, 65 sleeves exclusivas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
    specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'9 Booster Packs + acessórios',Promo:"N's Zekrom Full Art",Sleeves:'65 un. — design Mega Dragonite ex',Idioma:'Inglês',Lançamento:'Fev 2026'}},
-  {id:2, name:'Mini Tin — Ascended Heroes', edition:'Ascended Heroes', category:'accessories', ptype:'pack', img:IMG.ahTin, price:81.89, badge:'new', stockQty:10,
+  {id:2, name:'Mini Tin — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'Mini Tin', img:IMG.ahTin, price:129.90, badge:'new', stockQty:10, language:'Inglês',
    desc:'Mini Tin colecionável da expansão Mega Evolution — Ascended Heroes. Inclui 2 Booster Packs e uma moeda metálica exclusiva. Coleção completa combina as artes das 5 latas.',
    specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'2 Booster Packs + moeda metálica',Idioma:'Inglês',Formato:'Lata colecionável',Lançamento:'Fev 2026'}},
-  {id:3, name:'Booster Bundle — Ascended Heroes', edition:'Ascended Heroes', category:'boxes', ptype:'pack', img:IMG.ahBundle, price:209.99, stockQty:25,
-   desc:'Booster Bundle com 6 Booster Packs da expansão Mega Evolution — Ascended Heroes. Melhor custo-benefício para maximizar pulls raros e acelerar a coleção.',
-   specs:{Edição:'Mega Evolution — Ascended Heroes',Conteúdo:'6 Booster Packs',Idioma:'Inglês',Formato:'Bundle lacrado',Lançamento:'Fev 2026'}},
 
-  // PERFECT ORDER — Mega Evolution Series 2026
-  {id:4, name:'3-Pack Blister — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'pack', img:IMG.poBlister, price:104.99, stockQty:24,
+  // PERFECT ORDER — Mega Evolution 2026 (Inglês)
+  {id:3, name:'3-Pack Blister — Perfect Order', edition:'Perfect Order', category:'booster-packs', ptype:'Blister', img:IMG.poBlister, price:109.90, stockQty:24, language:'Inglês',
    desc:'Blister com 3 Booster Packs da expansão Mega Evolution — Perfect Order. Inclui promo foil Chikorita e moeda metálica colecionável. Mega Zygarde ex lidera a expansão baseada em Pokémon Legends: Z-A.',
    specs:{Edição:'Mega Evolution — Perfect Order',Conteúdo:'3 Booster Packs + promo + moeda',Promo:'Chikorita foil (MEP069)',Idioma:'Inglês',Lançamento:'Mar 2026'}},
-  {id:5, name:'ETB — Perfect Order', edition:'Perfect Order', category:'boxes', ptype:'etb', img:IMG.poETB, price:409.49, stockQty:10,
+  {id:4, name:'ETB — Perfect Order', edition:'Perfect Order', category:'etbs', ptype:'ETB', img:IMG.poETB, price:379.90, stockQty:8, language:'Inglês',
    desc:'Elite Trainer Box da expansão Mega Evolution — Perfect Order. Contém 9 Booster Packs, promo Tyrunt Full Art, 65 sleeves temáticas, 45 Energy cards, dados de dano, moeda plástica e caixa decorativa.',
    specs:{Edição:'Mega Evolution — Perfect Order',Conteúdo:'9 Booster Packs + acessórios',Promo:'Tyrunt Full Art',Mascote:'Mega Zygarde ex',Sleeves:'65 un. — design exclusivo',Idioma:'Inglês',Lançamento:'Mar 2026'}},
+  {id:5, name:'Booster Bundle — Mega Evolution', edition:'Mega Evolution', category:'boxes', ptype:'Bundle', img:null, price:219.90, stockQty:23, language:'Inglês',
+   desc:'Booster Bundle com 6 Booster Packs da expansão Mega Evolution em inglês. Ótimo custo-benefício para quem quer abrir packs e aumentar a coleção.',
+   specs:{Edição:'Mega Evolution',Conteúdo:'6 Booster Packs',Idioma:'Inglês',Formato:'Bundle lacrado'}},
+
+  // EQUILÍBRIO PERFEITO — Scarlet & Violet (Português)
+  {id:6, name:'Box Treinador Avançado — Equilíbrio Perfeito', edition:'Equilíbrio Perfeito', category:'etbs', ptype:'ETB', img:null, price:299.90, stockQty:8, language:'Português',
+   desc:'Box Treinador Avançado (Elite Trainer Box) da expansão Scarlet & Violet — Equilíbrio Perfeito em português. Inclui Booster Packs, sleeves, dados e acessórios.',
+   specs:{Edição:'Scarlet & Violet — Equilíbrio Perfeito',Conteúdo:'9 Booster Packs + acessórios',Idioma:'Português',Formato:'Elite Trainer Box'}},
+  {id:7, name:'Pokemon Box 36 Booster — Equilíbrio Perfeito', edition:'Equilíbrio Perfeito', category:'boxes', ptype:'Box', img:null, price:399.90, stockQty:4, language:'Português',
+   desc:'Box com 36 Booster Packs da expansão Scarlet & Violet — Equilíbrio Perfeito em português. Ideal para colecionadores que buscam volume e variedade de pulls.',
+   specs:{Edição:'Scarlet & Violet — Equilíbrio Perfeito',Conteúdo:'36 Booster Packs',Idioma:'Português',Formato:'Box lacrada'}},
+  {id:8, name:'Blister Quadruplo — Equilíbrio Perfeito', edition:'Equilíbrio Perfeito', category:'booster-packs', ptype:'Blister', img:null, price:43.90, stockQty:24, language:'Português',
+   desc:'Blister com 4 Booster Packs da expansão Scarlet & Violet — Equilíbrio Perfeito em português.',
+   specs:{Edição:'Scarlet & Violet — Equilíbrio Perfeito',Conteúdo:'4 Booster Packs',Idioma:'Português',Formato:'Blister'}},
+
+  // HEROIS EXCELSOS (Português)
+  {id:9, name:'Blister Triplo — Herois Excelsos', edition:'Herois Excelsos', category:'booster-packs', ptype:'Blister', img:null, price:43.90, stockQty:36, language:'Português',
+   desc:'Blister com 3 Booster Packs da expansão Herois Excelsos em português.',
+   specs:{Edição:'Herois Excelsos',Conteúdo:'3 Booster Packs',Idioma:'Português',Formato:'Blister'}},
+
+  // EVOLUÇÕES PRISMÁTICAS (Português)
+  {id:10, name:'Blister Triplo — Evoluções Prismáticas', edition:'Evoluções Prismáticas', category:'booster-packs', ptype:'Blister', img:null, price:49.90, stockQty:12, language:'Português',
+   desc:'Blister com 3 Booster Packs da expansão Evoluções Prismáticas em português.',
+   specs:{Edição:'Evoluções Prismáticas',Conteúdo:'3 Booster Packs',Idioma:'Português',Formato:'Blister'}},
+
+  // MEGA EVOLUÇÃO (Português)
+  {id:11, name:'Box Mega Venossauro EX — Mega Evolução', edition:'Mega Evolução', category:'boxes', ptype:'Box', img:null, price:135.90, stockQty:6, language:'Português',
+   desc:'Box colecionável do Mega Venossauro EX da expansão XY — Mega Evolução em português. Inclui carta promo e Booster Packs.',
+   specs:{Edição:'XY — Mega Evolução',Idioma:'Português',Formato:'Box colecionável'}},
+
+  // FOGO FANTASMAGÓRICO (Português)
+  {id:12, name:'Box Treinador Avançado — Fogo Fantasmagórico', edition:'Fogo Fantasmagórico', category:'etbs', ptype:'ETB', img:null, price:399.90, stockQty:8, language:'Português',
+   desc:'Box Treinador Avançado (Elite Trainer Box) da expansão Fogo Fantasmagórico em português. Inclui Booster Packs, sleeves, dados e acessórios.',
+   specs:{Edição:'Fogo Fantasmagórico',Conteúdo:'9 Booster Packs + acessórios',Idioma:'Português',Formato:'Elite Trainer Box'}},
+  {id:13, name:'Pokemon Box 36 Booster — Fogo Fantasmagórico', edition:'Fogo Fantasmagórico', category:'boxes', ptype:'Box', img:null, price:429.90, stockQty:8, language:'Português',
+   desc:'Box com 36 Booster Packs da expansão Fogo Fantasmagórico em português. Ideal para colecionadores que buscam volume e variedade de pulls.',
+   specs:{Edição:'Fogo Fantasmagórico',Conteúdo:'36 Booster Packs',Idioma:'Português',Formato:'Box lacrada'}},
+
+  // PARCEIROS INICIAIS (Português)
+  {id:14, name:'Box Parceiros Iniciais — Parceiros Iniciais', edition:'Parceiros Iniciais', category:'boxes', ptype:'Box', img:null, price:239.90, stockQty:2, language:'Português',
+   desc:'Box Parceiros Iniciais da expansão em português. Inclui cartas e conteúdo temático dos Pokémon iniciais.',
+   specs:{Edição:'Parceiros Iniciais',Idioma:'Português',Formato:'Box colecionável'}},
 ];
 
 const categoryLabels = {
-  'booster-packs':'Booster Packs','boxes':'Boxes & ETBs','accessories':'Acessórios',
-  'singles':'Cartas Individuais','graded':'Cartas Graduadas','all':'Todos os Produtos'
+  'booster-packs':'Booster Packs e Blisters',
+  'etbs':'ETBs',
+  'boxes':'Boxes e Bundles',
+  'singles':'Cartas Singles',
+  'graded':'Cartas Graduadas',
+  'all':'Todos os Produtos'
 };
 
 // ===== PRODUCT TYPE INDICATOR (shown as overlay label on product cards) =====
 const productTypeLabels = {
-  'booster-packs': 'BOOSTER PACK',
-  'boxes': 'BOX / ETB',
-  'singles': 'SINGLE CARD',
-  'graded': 'GRADED CARD',
-  'accessories': 'ACCESSORY'
+  'Box':'BOX','Blister':'BLISTER','ETB':'ETB',
+  'Bundle':'BUNDLE','Pack':'PACK','Mini Tin':'MINI TIN'
 };
 
 // ===== RENDER FUNCTIONS =====
@@ -2202,6 +2241,13 @@ function imgFallback(el, id){
   if(!p) return;
   el.parentElement.innerHTML = '<div class="product-placeholder">' + makeSVG(p.ptype||'accessory', editionColors[p.edition]||'#0D1B2A', '') + '</div>';
 }
+function langFlag(lang){
+  if(!lang) return '';
+  if(lang==='Inglês')    return '<span class="lang-flag">🇺🇸</span>';
+  if(lang==='Português') return '<span class="lang-flag">🇧🇷</span>';
+  return '';
+}
+
 function getProductImage(p){
   if(p.img){
     return `<img src="${p.img}" alt="" loading="lazy" onerror="imgFallback(this,${p.id})">`;
@@ -2237,7 +2283,7 @@ function renderProductCard(p){
       <div class="product-info">
         <div class="product-brand">Pokémon TCG</div>
         <div class="product-name">${p.name}</div>
-        <div class="product-edition">${p.edition}</div>
+        <div class="product-edition">${p.edition}${langFlag(p.language)}</div>
         <div class="product-footer">
           <div>
             ${oldPriceHTML}
@@ -2285,22 +2331,22 @@ function navigate(page, param){
     showListing(param, `Edição: ${param}`, filtered, ['Booster Packs','Boxes','Acessórios']);
   }
   else if(page==='booster-packs'){
-    showListing('Blisters','Blisters', products.filter(p=>p.category==='booster-packs'), ['Ascended Heroes','Perfect Order']);
+    showListing('Booster Packs e Blisters','Booster Packs e Blisters', products.filter(p=>p.category==='booster-packs'), ['Português','Inglês']);
+  }
+  else if(page==='etbs'){
+    showListing('ETBs','ETBs', products.filter(p=>p.category==='etbs'), ['Português','Inglês']);
   }
   else if(page==='boxes'){
-    showListing('Boxes & ETBs','Boxes & ETBs', products.filter(p=>p.category==='boxes'), ['Ascended Heroes','Perfect Order']);
+    showListing('Boxes e Bundles','Boxes e Bundles', products.filter(p=>p.category==='boxes'), ['Português','Inglês']);
   }
   else if(page==='singles'){
-    showListing('Cartas Individuais','Cartas Individuais', products.filter(p=>p.category==='singles'||p.category==='graded'), ['Near Mint','Graduada PSA']);
+    showListing('Cartas Singles','Cartas Singles', products.filter(p=>p.category==='singles'), ['Near Mint']);
   }
   else if(page==='graded'){
     showListing('Cartas Graduadas','Cartas Graduadas', products.filter(p=>p.category==='graded'), ['PSA 10']);
   }
-  else if(page==='accessories'){
-    showListing('Acessórios','Acessórios', products.filter(p=>p.category==='accessories'), ['Ascended Heroes']);
-  }
   else if(page==='all'){
-    showListing('Todos os Produtos','Todos os Produtos', products, ['Blisters','ETBs','Acessórios']);
+    showListing('Todos os Produtos','Todos os Produtos', products, ['Booster Packs','ETBs','Boxes']);
   }
   else if(page==='detail'){
     showDetail(param);
@@ -2327,9 +2373,6 @@ function navigate(page, param){
   else if(page==='contato'){ document.getElementById('page-contato').classList.add('active'); }
   else if(page==='privacidade'){ document.getElementById('page-privacidade').classList.add('active'); }
   else if(page==='termos'){ document.getElementById('page-termos').classList.add('active'); }
-  else if(page==='bundles'){
-    showListing('Bundles','Bundles', products.filter(p=>p.category==='bundles'), ['Ascended Heroes','Perfect Order']);
-  }
 }
 
 function showListing(title, breadcrumb, items, filters){
@@ -2389,7 +2432,7 @@ function showDetail(productId){
 
   document.getElementById('detailInfo').innerHTML = `
     ${badgeHTML}
-    <div class="detail-brand">Pokémon TCG</div>
+    <div class="detail-brand">Pokémon TCG${p.language ? ' · ' + langFlag(p.language) : ''}</div>
     <h1>${p.name}</h1>
     <div class="detail-divider"></div>
     <div class="detail-price">${oldPriceHTML} R$ ${p.price.toFixed(2).replace('.',',')}</div>
@@ -2430,11 +2473,10 @@ let cart = [];
 const FRETE_GRATIS_MINIMO = 799;
 const PESO_PADRAO_POR_CATEGORIA = {
   'booster-packs': 150,
-  'boxes':         950,
+  'etbs':          950,
+  'boxes':         600,
   'singles':        25,
   'graded':        130,
-  'bundles':       400,
-  'accessories':   300,
 };
 let shippingOption = null; // { servico, nome, preco, prazo }
 let shippingOpcoes = [];
@@ -3735,6 +3777,7 @@ async function init(){
         price:    parseFloat(p.price),
         oldPrice: p.old_price ? parseFloat(p.old_price) : null,
         badge:    p.badge    || null,
+        language: p.language || null,
         stockQty: Number(p.stock_qty ?? 0),
         desc:     p.description || '',
         img:      p.img_url  || null,
