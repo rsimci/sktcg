@@ -921,12 +921,7 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
         </div>
       </div>
       <div class="nav-link has-dropdown">Edições
-        <div class="dropdown">
-          <a href="#" onclick="navigate('edition','Ascended Heroes');return false;">Ascended Heroes <span class="dropdown-tag">NOVO</span></a>
-          <a href="#" onclick="navigate('edition','Perfect Order');return false;">Perfect Order</a>
-          <div class="dropdown-divider"></div>
-          <a href="#" onclick="navigate('editions');return false;" style="font-weight:500;">Todas as edições →</a>
-        </div>
+        <div class="dropdown" id="editions-dropdown"></div>
       </div>
       <a class="nav-link" href="#" onclick="navigate('about');return false;">Sobre</a>
       <a class="nav-link" href="#" onclick="navigate('faq');return false;">FAQ</a>
@@ -1192,7 +1187,7 @@ h1,h2,h3,h4,h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;fon
         <h2 class="section-title">Cada edição, uma história.</h2>
         <p class="section-desc">Curadoria focada em coleções novas, em pré-venda e clássicos ainda disponíveis.</p>
       </div>
-      <a class="section-link" href="#">Todas as edições →</a>
+      <a class="section-link" href="#" onclick="navigate('editions');return false;">Todas as edições →</a>
     </div>
     <div class="prod-grid" id="editionsGrid"></div>
   </div>
@@ -2242,6 +2237,38 @@ function imgFallback(el, id){
   if(!p) return;
   el.parentElement.innerHTML = '<div class="product-placeholder">' + makeSVG(p.ptype||'accessory', editionColors[p.edition]||'#0D1B2A', '') + '</div>';
 }
+function buildEditionsDropdown(){
+  const el = document.getElementById('editions-dropdown');
+  if(!el) return;
+
+  // Edições únicas de produtos com estoque > 0, na ordem em que aparecem
+  const seen = new Set();
+  const editions = [];
+  for(const p of products){
+    if(p.edition && Number(p.stockQty ?? 0) > 0 && !seen.has(p.edition)){
+      seen.add(p.edition);
+      editions.push(p.edition);
+    }
+  }
+
+  // Edições com badge 'new' (para marcar como NOVO no menu)
+  const newEditions = new Set(
+    products.filter(p => p.badge === 'new' && Number(p.stockQty ?? 0) > 0).map(p => p.edition)
+  );
+
+  const MAX = 7; // máximo visível antes de "Todas as edições"
+  const shown = editions.slice(0, MAX);
+
+  const links = shown.map(ed => {
+    const tag = newEditions.has(ed) ? ' <span class="dropdown-tag">NOVO</span>' : '';
+    return `<a href="#" onclick="navigate('edition','${ed}');return false;">${ed}${tag}</a>`;
+  }).join('');
+
+  el.innerHTML = links
+    + '<div class="dropdown-divider"></div>'
+    + '<a href="#" onclick="navigate(\'editions\');return false;" style="font-weight:500;">Todas as edições →</a>';
+}
+
 function langFlag(lang){
   if(!lang) return '';
   const flags = {
@@ -2315,15 +2342,50 @@ function renderProductCard(p){
     </div>`;
 }
 
-function renderEditionCard(e, large){
-  const pad = large ? 'padding:28px 20px;' : '';
+function getEditionsFromProducts(){
+  const map = new Map();
+  for(const p of products){
+    if(!p.edition || Number(p.stockQty ?? 0) <= 0) continue;
+    if(!map.has(p.edition)) map.set(p.edition, {name: p.edition, prods: []});
+    map.get(p.edition).prods.push(p);
+  }
+  return [...map.values()];
+}
+
+function renderEditionCard(ed, large){
+  const edName = ed.name || ed; // compatibilidade com chamadas legadas
+  const prods  = ed.prods || [];
+  const count  = prods.length;
+  const pad    = large ? 'padding:28px 20px;' : '';
+  const color  = editionColors[edName] || '#1A2744';
+
+  // até 3 produtos — prioriza os que têm img real
+  const picked = [...prods.filter(p=>p.img), ...prods.filter(p=>!p.img)].slice(0,3);
+  const SLOT=56, STEP=28;
+  const totalW = picked.length > 1 ? (picked.length-1)*STEP + SLOT : SLOT;
+
+  const slots = picked.map((p,i)=>{
+    const left = i * STEP;
+    const z    = picked.length - i;
+    const inner = p.img
+      ? `<img src="${p.img}" alt="" style="width:100%;height:100%;object-fit:contain;padding:6px;">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">${makeSVG(p.ptype||'accessory',color,'')}</div>`;
+    return `<div style="position:absolute;left:${left}px;z-index:${z};width:${SLOT}px;height:${SLOT}px;border-radius:10px;overflow:hidden;background:var(--navy-2);box-shadow:0 4px 12px rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.07);">${inner}</div>`;
+  }).join('');
+
+  const imgSection = picked.length > 0
+    ? `<div style="position:relative;height:${SLOT}px;width:${totalW}px;margin:0 auto 14px;">${slots}</div>`
+    : `<div class="edition-icon" style="margin-bottom:14px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/></svg></div>`;
+
+  const subtitle = count > 0
+    ? `${count} produto${count!==1?'s':''} disponíve${count!==1?'is':'l'}`
+    : (ed.code ? `${ed.code} · ${ed.year}` : '');
+
   return `
-    <div class="edition-card" style="${pad}" onclick="navigate('edition','${e.name}')">
-      <div class="edition-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="12" cy="12" r="2"/></svg>
-      </div>
-      <h4>${e.name}</h4>
-      <span>${e.code} · ${e.year}</span>
+    <div class="edition-card" style="${pad}" onclick="navigate('edition','${edName}')">
+      ${imgSection}
+      <h4>${edName}</h4>
+      <span>${subtitle}</span>
     </div>`;
 }
 
@@ -2343,7 +2405,7 @@ function navigate(page, param){
   }
   else if(page==='editions'){
     document.getElementById('page-editions').classList.add('active');
-    document.getElementById('allEditionsGrid').innerHTML = editions.map(e=>renderEditionCard(e,true)).join('');
+    document.getElementById('allEditionsGrid').innerHTML = getEditionsFromProducts().map(e=>renderEditionCard(e,true)).join('');
   }
   else if(page==='edition'){
     const filtered = products.filter(p=>p.edition===param);
@@ -3687,7 +3749,7 @@ document.addEventListener('click', function(e) {
 
 function renderHome() {
   document.getElementById('featuredGrid').innerHTML = products.map(renderProductCard).join('');
-  document.getElementById('editionsGrid').innerHTML = editions.map(e=>renderEditionCard(e,false)).join('');
+  document.getElementById('editionsGrid').innerHTML = getEditionsFromProducts().map(e=>renderEditionCard(e,false)).join('');
 
   const ahColor = editionColors['Ascended Heroes'];
   const heroETB  = document.getElementById('heroETB');
@@ -3782,6 +3844,9 @@ async function init(){
     }
   }
 
+  // Popula dropdown de edições com produtos hardcoded (antes do fetch Supabase)
+  buildEditionsDropdown();
+
   // Carregar produtos do Supabase; fallback para hardcoded se tabela vazia ou offline
   try {
     const { data, error } = await sb.from('products').select('*').eq('active', true).order('created_at');
@@ -3804,6 +3869,8 @@ async function init(){
       }));
     }
   } catch(e) { /* usa produtos hardcoded como fallback */ }
+
+  buildEditionsDropdown();
 
   // Restaura carrinho salvo (persiste ao voltar do MP sem concluir)
   try {
